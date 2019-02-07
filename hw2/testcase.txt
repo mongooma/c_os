@@ -1,0 +1,15 @@
+# some test cases for hw2
+# need to create pipes
+
+ls
+
+ls -l | grep .c
+
+ls -l | wc -l
+
+exit
+
+# 
+
+ps | grep 
+

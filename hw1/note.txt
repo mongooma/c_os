@@ -1,0 +1,31 @@
+
+memory leak:
+valgrind ./hw1_cache 12 test.txt
+
+using gcc: 
+gcc -Wall -Werror hw1_cache.c -o hw1_cache
+-D DEBUG (use printf)
+
+gcc -g ./hw1_cache.c
+-g debug mode used by gdb
+
+
+using gdb for debugging:
+
+gdb <executable>
+break <number>
+run <args>
+print <variable>
+... 
+
+
+
+todo: 
+	1. take care of the "!" in test.txt DONE
+	2. remove all the bracket usages DONE
+
+		    *c+1 means exactly the same thing as c[0]+1, and is nothing special at all.
+			*(c+1) means the same thing as c[1]. If you add one to the address of the beginning of an array, you get the address of the second thing in that array.
+
+	3. notice that by ANSI C standard all the declarations must be placed at the top of the scope DONE
+
