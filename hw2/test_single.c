@@ -12,7 +12,8 @@
 
 int main(){
 
-	printf("%s \n", getenv("PATH"));
+	printf("%s$ ", getcwd(NULL, 0)); 
+	//execlp( "/bin/ls",   "ls",    "-l",    "owefijweofjiwe", NULL );
 
 	return 0;
 

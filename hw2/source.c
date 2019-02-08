@@ -11,10 +11,14 @@ Use C to implement a rudimentary interactive shell similar to that of bash.
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <dirent.h> 
+#include <string.h>
+#include <ctype.h>
+#include <unistd.h> //for unix
+#include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <dirent.h> 
-#include <unistd.h> //for unix
+#include <sys/wait.h>
 
 #define MAX_CMD_LEN 1024 // user's input command
 #define MAX_ARGV_LEN 64 // each argv in the command
@@ -43,12 +47,12 @@ int * trimEndSpace(char * buffer) {
 }
 
 
-int ** getCmd(const char * buffer, char ** argv) {
+int getCmd(const char * buffer, char ** argv) {
 	/* read buffer and store each argument in char ** argv*/
 	/* argv has initial 1 block and will be extended after this function:
 		*/
 	/* 
-		Output: 0 
+		Output: length of argv k+1
 	*/
 
 	/* debugged 30min */
@@ -86,8 +90,8 @@ int ** getCmd(const char * buffer, char ** argv) {
 	strcpy(argv[k], arg_buffer); 
 
 	free(arg_buffer);
-
-	return 0;
+	
+	return k+1;
 }
 
 
@@ -125,7 +129,9 @@ char * searchPath(const char * PATH, const char * cmd) {
 			return -1;
 		}
 		/* DIR is a directory stream for reading the directory */
+#ifdef DEBUG
 		int erronum;
+#endif
 		/* */
 
 		/* check directories.c https://submitty.cs.rpi.edu/index.php?semester=s19&course=csci4210&component=misc&page=display_file&dir=course_materials&file=directories.c&path=%2Fvar%2Flocal%2Fsubmitty%2Fcourses%2Fs19%2Fcsci4210%2Fuploads%2Fcourse_materials%2Flec-01-31%2Fdirectories.c */
@@ -217,7 +223,7 @@ char * searchPath(const char * PATH, const char * cmd) {
 	return NULL;
 }
 
-int main() {
+int main(int argc, char ** argv) {
 	/* before you run, set the $MYPATH in the bash shell 
 		MYPATH=/usr/local/bin#/usr/bin#/bin#.
 
@@ -233,11 +239,10 @@ int main() {
 
 	/* You may also assume that command-line arguments do not contain spaces.
 	*/
-	int call_fork = 0;
 	char *buffer = calloc(MAX_CMD_LEN + 1, sizeof(char));
-	char **argv = calloc(1, sizeof(char *)); /*temporarily assign 1 block for argv array*/
+	char **argv_user = calloc(1, sizeof(char *)); /*temporarily assign 1 block for argv array*/
 	char *FILE = calloc(MAX_FILEPATH_LEN, sizeof(char)); /* todo: initialize */
-	int i, j, k;
+	int argv_no;
 
 	while (1) {
 		/* create an inﬁnite loop that repeatedly prompts a user to enter a command, parses the given command, locates the command executable, then executes the command (if found).
@@ -249,11 +254,12 @@ int main() {
 		printf("%s$ ", getcwd(NULL, 0)); /* todo, TRY POSIX.1-2001 Standard, check man page*/
 
 		/* 2. use fgets() to read in a command from the user */
-		fgets(buffer, 1024, stdin);
+		fgets(buffer, MAX_CMD_LEN, stdin);
 		/* 3. extract command from buffer */
 
 		trimEndSpace(buffer);
-		getCmd(buffer, argv); 
+		
+		argv_no = getCmd(buffer, argv_user); 
 
 		/* 4. To execute the given command, a child process is created via fork()*/
 
@@ -261,17 +267,17 @@ int main() {
 		   special case for "cd" */
 
 
-		if (argv[0] == "cd" /* todo: check string comparison*/) {
+		if (strcmp(argv_user[0], "cd") /* todo: check string comparison*/) {
 
 			/* change directory in the parent process*/
 
-			if (k > 1) {
+			if (argv_no > 2) {
 				perror("man cd; cd <dir_name>\n");
-				continue;
+				continue; /* continue getting next command*/
 
 			}
 
-			chdir(argv[1]); /* todo, check usage*/
+			chdir(argv_user[1]); 
 
 			continue;
 
@@ -279,24 +285,22 @@ int main() {
 
 		/* 4.2 check in $MYPATH directories for executable for user cmd*/
 
-
-
-		strcpy(FILE, searchPath(getenv("MYPATH"), argv[0]));/* search $MYPATH */;
+		strcpy(FILE, searchPath(getenv("MYPATH"), argv_user[0]));/* search $MYPATH */;
 		/* eg. '/usr/bin/sudo' */
 
 
+		/* 4.3 create a child process to execute the command using executable file found */
+		/* May want to check this: https://submitty.cs.rpi.edu/index.php?semester=s19&course=csci4210&component=misc&page=display_file&dir=course_materials&file=fork-with-exec.c&path=%2Fvar%2Flocal%2Fsubmitty%2Fcourses%2Fs19%2Fcsci4210%2Fuploads%2Fcourse_materials%2Flec-01-28%2Ffork-with-exec.c*/
 		if ( FILE == NULL/* search directory; command not found*/) {
 
 			perror("Command not found. \n");
-			continue; /* taki in another user's input */
+			continue; /* take in another user's input */
 		}
-		else {
+		
+		pid_t pid = fork(); /* each time execute one command*/
+		
 
-			pid_t pid = fork(); /* each time execute one command*/
-
-		}
-
-		if ( pid == -1 ) {
+		if ( pid == -1 ) { /* child process creation failed*/
 
 			perror("fork() failed \n");
 			return EXIT_FAILURE;
@@ -306,22 +310,30 @@ int main() {
 			/*CHILD PROCESS*/
 
 			/* calling execvp() to execute the command */
-			execvp(FILE, argv + 1); /*todo: check usage*/
+			/* man 3 execvp: 
+			 The execlp(), execvp(), and execvpe() functions duplicate the actions of the shell in  searching
+       for  an  executable  file if the specified filename does not contain a slash (/) character.
+			If  the specified filename includes a slash character, then PATH is ignored, and the file at the
+       specified pathname is executed.*/
 
+			execvp(FILE, argv_user); /* argv of type char * const *, 
+									if initialize use char * const cmds [] = {"sudo", "apt-get", "install", NULL};
+									not char * const cmds [] = ... */
 		}
 		else {
 			/*PARENT PROCESS*/ 
 			int status;
 			pid_t child_pid;
 
-			if ( argv[k] != '&' /*foreground processing*/) {
+			if ( strcmp(argv_user[argv_no-1], "&") != 0  /*foreground processing*/) {
 				while (1) {
 					child_pid = waitpid(pid, &status, WNOHANG);
-					if (child_pid != 0) break; /*-1 on error; 0 on not changed; pid on success*/
+					if (child_pid != 0) continue; /*-1 on error; 0 on not changed; pid on success*/
 					sleep(1);
 				}
 
-				if (child_pid == -1) perror("waitpid() failed for child process %d \n", pid);
+				if (child_pid == -1) printf("waitpid() failed for child process %d \n", pid);
+				continue;
 			}
 			else { /* background processing */
 
