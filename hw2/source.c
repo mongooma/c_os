@@ -102,7 +102,7 @@ char * searchPath(const char * PATH, const char * cmd) {
 
 	/* search in $MYPATH to find the executable FILE*/
 
-#ifdef DEBUG
+#ifdef DEBUG_pass
 	FILE * f = fopen("./log.txt", "w");
 	fprintf(f, "PATH: %s \n", PATH);
 #endif //debug
@@ -116,7 +116,7 @@ char * searchPath(const char * PATH, const char * cmd) {
 		side-effect:
 			after this function the working directory of the parent process will be changed*/
 
-#ifdef DEBUG
+#ifdef DEBUG_pass
 		fprintf(f, "%s\n", p);
 #endif //debug
 
@@ -129,7 +129,7 @@ char * searchPath(const char * PATH, const char * cmd) {
 			return -1;
 		}
 		/* DIR is a directory stream for reading the directory */
-#ifdef DEBUG
+#ifdef DEBUG_pass
 		int erronum;
 #endif
 		/* */
@@ -188,7 +188,7 @@ char * searchPath(const char * PATH, const char * cmd) {
 			/* TODO: using PATH[i] == '#' || ':' won't give the right result*/
 
 			p[j] = '\0';
-#ifdef DEBUG
+#ifdef DEBUG_pass
 		fprintf(f, "%s\n", p);
 #endif //debug
 			
@@ -243,6 +243,10 @@ int main(int argc, char ** argv) {
 	char **argv_user = calloc(1, sizeof(char *)); /*temporarily assign 1 block for argv array*/
 	char *FILE = calloc(MAX_FILEPATH_LEN, sizeof(char)); /* todo: initialize */
 	int argv_no;
+	int r;
+	char * cwd = calloc(MAX_PATH_LEN, sizeof(char));
+
+	strcpy(cwd, getcwd(NULL, 0)); /* RESTORE cwd when needed */
 
 	while (1) {
 		/* create an inﬁnite loop that repeatedly prompts a user to enter a command, parses the given command, locates the command executable, then executes the command (if found).
@@ -259,7 +263,8 @@ int main(int argc, char ** argv) {
 
 		trimEndSpace(buffer);
 		
-		argv_no = getCmd(buffer, argv_user); 
+		argv_no = getCmd(buffer, argv_user);  /* argv_user is changed after this*/
+
 
 		/* 4. To execute the given command, a child process is created via fork()*/
 
@@ -267,25 +272,59 @@ int main(int argc, char ** argv) {
 		   special case for "cd" */
 
 
-		if (strcmp(argv_user[0], "cd") /* todo: check string comparison*/) {
+		if (strcmp(argv_user[0], "cd") == 0 /* todo: check string comparison*/) {
 
 			/* change directory in the parent process*/
 
 			if (argv_no > 2) {
-				perror("man cd; cd <dir_name>\n");
-				continue; /* continue getting next command*/
+				chdir(getenv("HOME")); /* as requested in the hw2 pdf*/
 
 			}
 
-			chdir(argv_user[1]); 
+
+			if (argv_no > 2) {
+				perror("man cd; cd <dir_name>\n");
+			}
+
+			r = chdir(argv_user[1]); 
+
+			if (r == -1){
+				perror("");
+			}
 
 			continue;
 
 		}
 
+		if (strcmp(argv_user[0], "exit") == 0 /* todo: check string comparison*/) {
+
+			/* change directory in the parent process*/
+
+			if (argv_no > 2) {
+				perror("man exit\n");
+				continue; /* continue getting next command*/
+
+			}
+
+			return 0; 
+
+		}
+
+
+
 		/* 4.2 check in $MYPATH directories for executable for user cmd*/
 
+		if(getenv("MYPATH") == NULL){
+			perror("Specify the $MYPATH variable using: \n"
+				"bash$ export MYPATH=/usr/local/bin#/usr/bin#/bin#. \n"
+				"bash$ echo $MYPATH \n"
+				"MYPATH=/usr/local/bin#/usr/bin#/bin#. \n"
+				"bash$ unset MYPATH \n"
+					"");
+		}
+
 		strcpy(FILE, searchPath(getenv("MYPATH"), argv_user[0]));/* search $MYPATH */;
+		chdir(cwd);
 		/* eg. '/usr/bin/sudo' */
 
 
@@ -316,29 +355,60 @@ int main(int argc, char ** argv) {
 			If  the specified filename includes a slash character, then PATH is ignored, and the file at the
        specified pathname is executed.*/
 
+			argv_user = realloc(argv_user, (argv_no + 1) * sizeof(char *)); /* extend one block for argv, the new block is not initialized*/
+			argv_user[argv_no] = NULL ;
+#ifdef DEBUG
+			printf("cmd no.: %d \n", argv_no + 1);
+			for(int i=0; i < argv_no + 1; i ++){
+				printf("%s, \n", argv_user[i]);
+			}
+#endif
 			execvp(FILE, argv_user); /* argv of type char * const *, 
 									if initialize use char * const cmds [] = {"sudo", "apt-get", "install", NULL};
 									not char * const cmds [] = ... */
+#ifdef DEBUG
+			printf("cmd executed finished\n"); /* NOTICE: This line will not be reached since it's in parent process*/
+
+#endif
+
 		}
 		else {
 			/*PARENT PROCESS*/ 
 			int status;
 			pid_t child_pid;
 
+#ifdef DEBUG
+			printf("GOT child process %d\n", pid); 
+
+#endif
 			if ( strcmp(argv_user[argv_no-1], "&") != 0  /*foreground processing*/) {
 				while (1) {
-					child_pid = waitpid(pid, &status, WNOHANG);
-					if (child_pid != 0) continue; /*-1 on error; 0 on not changed; pid on success*/
+					child_pid = waitpid(pid, &status, WNOHANG); /* todo L man waitpid*/
+					if (child_pid != 0) {continue;}else{break;}/*-1 on error; 0 on not changed; pid on success*/
 					sleep(1);
 				}
 
-				if (child_pid == -1) printf("waitpid() failed for child process %d \n", pid);
+				
+				if (child_pid == -1) {
+					printf("waitpid() failed for child process %d \n", pid);
+				}
+
+#ifdef DEBUG
+				printf("cmd executed finished\n"); 
+
+#endif
 				continue;
 			}
 			else { /* background processing */
+				/* report a child process has been created */
+				printf("[running background process \"%s\"]\n", argv_user[0]);
 
 				continue; //parent process don't wait for the child process to terminate
+				
+				/* todo: use waitpid() for background process when calling kill (?)*/
 
+				/* todo: display [process 9335 terminated with exit status 0] when the background process is terminated*/
+			
 			}
 		}
 	}

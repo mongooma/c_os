@@ -7,9 +7,19 @@ ls -l | grep .c
 
 ls -l | wc -l
 
+ps | grep 
+
+cat <filename>
+
+--
+
+passed:
+
 exit
 
-# 
+cd <dirname>
 
-ps | grep 
+ls - user terminating signal? 
+
+
 
