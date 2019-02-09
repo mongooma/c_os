@@ -19,7 +19,13 @@ exit
 
 cd <dirname>
 
-ls - user terminating signal? 
+ls
+
+cat <filename>
+
+
+
+
 
 
 

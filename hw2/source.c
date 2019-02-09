@@ -223,6 +223,76 @@ char * searchPath(const char * PATH, const char * cmd) {
 	return NULL;
 }
 
+
+
+int execute_cmd(char * argv, int argv_no){
+
+			argv_user = realloc(argv_user, (argv_no + 1) * sizeof(char *)); /* extend one block for argv, the new block is not initialized*/
+			argv_user[argv_no] = NULL ;
+#ifdef DEBUG
+			printf("cmd no.: %d \n", argv_no + 1);
+			for(int i=0; i < argv_no + 1; i ++){
+				printf("%s, \n", argv_user[i]);
+			}
+#endif
+			
+			execvp(FILE, argv_user); /* argv of type char * const *, 
+									if initialize use char * const cmds [] = {"sudo", "apt-get", "install", NULL};
+									not char * const cmds [] = ... */
+
+
+		/* within a child process, no fork() is executed here*/
+
+		if ( strcmp(argv[argv_no], "&") != 0){/* if foreground
+
+			(parent) (wait)
+			   |
+			   |
+			child (exec)
+
+		*/
+
+
+		}else{  }
+
+		/* if background
+
+			(parent) (wait)
+			   |
+			   |
+			child (wait)
+			   |
+			   |	 
+			child_1 (exec)	 
+		*/
+
+
+
+		/* if with one pipe
+			
+			(parent) (wait)
+			   |
+			   |
+			child (wait)
+			 /  \
+			/	 \
+		child_1	 child_2
+		(stdout --> stdin)
+
+		*/
+
+
+
+		return 0;
+
+
+
+
+}
+
+
+
+
 int main(int argc, char ** argv) {
 	/* before you run, set the $MYPATH in the bash shell 
 		MYPATH=/usr/local/bin#/usr/bin#/bin#.
@@ -268,48 +338,30 @@ int main(int argc, char ** argv) {
 
 		/* 4. To execute the given command, a child process is created via fork()*/
 
-		/* 4.1 Some commands are not resulting a call to fork(); 
-		   special case for "cd" */
-
+		/* 4.1 special case cd, exit*/
 
 		if (strcmp(argv_user[0], "cd") == 0 /* todo: check string comparison*/) {
 
 			/* change directory in the parent process*/
 
-			if (argv_no > 2) {
-				chdir(getenv("HOME")); /* as requested in the hw2 pdf*/
-
-			}
-
-
-			if (argv_no > 2) {
-				perror("man cd; cd <dir_name>\n");
-			}
+			if (argv_no < 2) { chdir(getenv("HOME")); /* as requested in the hw2 pdf*/}
+			if (argv_no > 2) { printf("man cd; cd <dir_name>\n"); }
 
 			r = chdir(argv_user[1]); 
-
-			if (r == -1){
-				perror("");
-			}
+			if (r == -1){perror("");}
 
 			continue;
 
 		}
 
-		if (strcmp(argv_user[0], "exit") == 0 /* todo: check string comparison*/) {
+		if (strcmp(argv_user[0], "exit") == 0 ){
 
-			/* change directory in the parent process*/
+			/* exit parent process*/
 
-			if (argv_no > 2) {
-				perror("man exit\n");
-				continue; /* continue getting next command*/
-
-			}
-
+			if (argv_no > 2) {perror("man exit\n");	continue; }
 			return 0; 
 
 		}
-
 
 
 		/* 4.2 check in $MYPATH directories for executable for user cmd*/
@@ -330,24 +382,14 @@ int main(int argc, char ** argv) {
 
 		/* 4.3 create a child process to execute the command using executable file found */
 		/* May want to check this: https://submitty.cs.rpi.edu/index.php?semester=s19&course=csci4210&component=misc&page=display_file&dir=course_materials&file=fork-with-exec.c&path=%2Fvar%2Flocal%2Fsubmitty%2Fcourses%2Fs19%2Fcsci4210%2Fuploads%2Fcourse_materials%2Flec-01-28%2Ffork-with-exec.c*/
-		if ( FILE == NULL/* search directory; command not found*/) {
-
-			perror("Command not found. \n");
-			continue; /* take in another user's input */
-		}
+		if ( FILE == NULL/* search directory; command not found*/) { perror("Command not found. \n"); continue; /* take in another user's input */}
 		
 		pid_t pid = fork(); /* each time execute one command*/
 		
-
-		if ( pid == -1 ) { /* child process creation failed*/
-
-			perror("fork() failed \n");
-			return EXIT_FAILURE;
-
+		if ( pid == -1 ) { /* child process creation failed*/ perror("fork() failed \n"); return EXIT_FAILURE;
 		}
 		else if( pid == 0){
 			/*CHILD PROCESS*/
-
 			/* calling execvp() to execute the command */
 			/* man 3 execvp: 
 			 The execlp(), execvp(), and execvpe() functions duplicate the actions of the shell in  searching
@@ -355,21 +397,7 @@ int main(int argc, char ** argv) {
 			If  the specified filename includes a slash character, then PATH is ignored, and the file at the
        specified pathname is executed.*/
 
-			argv_user = realloc(argv_user, (argv_no + 1) * sizeof(char *)); /* extend one block for argv, the new block is not initialized*/
-			argv_user[argv_no] = NULL ;
-#ifdef DEBUG
-			printf("cmd no.: %d \n", argv_no + 1);
-			for(int i=0; i < argv_no + 1; i ++){
-				printf("%s, \n", argv_user[i]);
-			}
-#endif
-			execvp(FILE, argv_user); /* argv of type char * const *, 
-									if initialize use char * const cmds [] = {"sudo", "apt-get", "install", NULL};
-									not char * const cmds [] = ... */
-#ifdef DEBUG
-			printf("cmd executed finished\n"); /* NOTICE: This line will not be reached since it's in parent process*/
-
-#endif
+			execute_cmd(argv_user, argv_no);
 
 		}
 		else {
@@ -377,13 +405,9 @@ int main(int argc, char ** argv) {
 			int status;
 			pid_t child_pid;
 
-#ifdef DEBUG
-			printf("GOT child process %d\n", pid); 
-
-#endif
 			if ( strcmp(argv_user[argv_no-1], "&") != 0  /*foreground processing*/) {
 				while (1) {
-					child_pid = waitpid(pid, &status, WNOHANG); /* todo L man waitpid*/
+					child_pid = waitpid(pid, &status, WNOHANG); /* wait in the parent process for the child process to finish*/
 					if (child_pid != 0) break;/*-1 on error; 0 on not changed; pid on success*/
 					sleep(1);
 				}
@@ -405,7 +429,7 @@ int main(int argc, char ** argv) {
 
 				continue; //parent process don't wait for the child process to terminate
 				
-				/* todo: use waitpid() for background process when calling kill (?)*/
+				/* todo: use waitpid() for background process*/
 
 				/* todo: display [process 9335 terminated with exit status 0] when the background process is terminated*/
 			
