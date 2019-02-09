@@ -324,7 +324,7 @@ int main(int argc, char ** argv) {
 		}
 
 		strcpy(FILE, searchPath(getenv("MYPATH"), argv_user[0]));/* search $MYPATH */;
-		chdir(cwd);
+		chdir(cwd); /* this is to deal with the side-effect of using searchPath() */
 		/* eg. '/usr/bin/sudo' */
 
 
@@ -384,7 +384,7 @@ int main(int argc, char ** argv) {
 			if ( strcmp(argv_user[argv_no-1], "&") != 0  /*foreground processing*/) {
 				while (1) {
 					child_pid = waitpid(pid, &status, WNOHANG); /* todo L man waitpid*/
-					if (child_pid != 0) {continue;}else{break;}/*-1 on error; 0 on not changed; pid on success*/
+					if (child_pid != 0) break;/*-1 on error; 0 on not changed; pid on success*/
 					sleep(1);
 				}
 
