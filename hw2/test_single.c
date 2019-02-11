@@ -12,7 +12,9 @@
 
 int main(){
 
-	printf("%s$ ", getcwd(NULL, 0)); 
+	char * argv[] ={"ls", "|", "all"}; 
+	int i = strcmp(argv[1], "|");
+	printf("i: %d\n", i); 
 	//execlp( "/bin/ls",   "ls",    "-l",    "owefijweofjiwe", NULL );
 
 	return 0;

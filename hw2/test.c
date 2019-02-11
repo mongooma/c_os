@@ -7,41 +7,56 @@
 #include <ctype.h>
 #include <unistd.h> //for unix
 #include <errno.h>
+#include <sys/wait.h>
+/*********LOCAL********/
+#include "functions.h"
 
 
 
 
-int main(){
+int main_(){
 
-	int pid = fork();
+	pid_t pid = fork();
 
 	
 	if( pid == 0){
 
-		int pid_1 = fork();
+		char ** arg = calloc(1, sizeof(char *));
+		arg[0] = strcpy(arg[0], "ls");
+		//char * arg [] = {"ls", NULL};
+		for (int i=0; i < 2; i ++){
 
-		if( pid_1 == 0 ){
-
-			execlp("/usr/bin/ls", "ls", NULL)
-
-		}else{
-
-			int status_1;
-			pid_t child_pid_1;
-
-			while (1) {
-				child_pid_1 = waitpid(pid_1, &status, WNOHANG); 
-				if (child_pid_1 != 0) break;
-				sleep(1);
-			}
-
+			printf("%s \n", arg[i]);
+			fflush(stdout);
 		}
+		arg = realloc(arg, 2 * sizeof(char *)); 
+		arg[1] = NULL;
 
+		execv("ls", arg);
 
 	}
 	else {
 		/*PARENT PROCESS*/ 
+		int status;
+		pid_t child_pid;
 
-	
+		while (1) {
+			child_pid = waitpid(pid, &status, WNOHANG); 
+			if (child_pid != 0) break;
+			sleep(1);
+		}
+
+		if (child_pid == -1){perror("");}
 	}
+}
+
+int main(){
+
+	char ** argv = calloc(1, sizeof(char *));
+	getCmd("ls here im", argv);
+
+	free(argv);
+
+
+
 }

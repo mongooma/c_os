@@ -45,9 +45,7 @@ int main(int argc, char ** argv) {
 	*/
 	char *buffer = calloc(MAX_CMD_LEN + 1, sizeof(char));
 	char **argv_user = calloc(1, sizeof(char *)); /*temporarily assign 1 block for argv array*/
-	char *FILE = calloc(MAX_FILEPATH_LEN, sizeof(char)); /* todo: initialize */
 	int argv_no;
-	int r;
 	char * cwd = calloc(MAX_PATH_LEN, sizeof(char));
 
 	strcpy(cwd, getcwd(NULL, 0)); /* RESTORE cwd when needed */
@@ -72,33 +70,7 @@ int main(int argc, char ** argv) {
 
 		/* 4. To execute the given command, a child process is created via fork()*/
 
-		/* 4.1 special case cd, exit*/
-
-		if (strcmp(argv_user[0], "cd") == 0 /* todo: check string comparison*/) {
-
-			/* change directory in the parent process*/
-
-			if (argv_no < 2) { chdir(getenv("HOME")); /* as requested in the hw2 pdf*/}
-			if (argv_no > 2) { printf("man cd; cd <dir_name>\n"); }
-
-			r = chdir(argv_user[1]); 
-			if (r == -1){perror("");}
-
-			continue;
-
-		}
-
-		if (strcmp(argv_user[0], "exit") == 0 ){
-
-			/* exit parent process*/
-
-			if (argv_no > 2) {perror("man exit\n");	continue; }
-			return 0; 
-
-		}
-
-
-		/* 4.2 check in $MYPATH directories for executable for user cmd*/
+		/* 4.1 check in $MYPATH directories for executable for user cmd*/
 
 		if(getenv("MYPATH") == NULL){
 			perror("Specify the $MYPATH variable using: \n"
@@ -109,16 +81,8 @@ int main(int argc, char ** argv) {
 					"");
 		}
 
-		strcpy(FILE, searchPath(getenv("MYPATH"), argv_user[0]));/* search $MYPATH */;
-		chdir(cwd); /* this is to deal with the side-effect of using searchPath() */
-		/* eg. '/usr/bin/sudo' */
-
-
-		/* 4.3 create a child process to execute the command using executable file found */
-		/* May want to check this: https://submitty.cs.rpi.edu/index.php?semester=s19&course=csci4210&component=misc&page=display_file&dir=course_materials&file=fork-with-exec.c&path=%2Fvar%2Flocal%2Fsubmitty%2Fcourses%2Fs19%2Fcsci4210%2Fuploads%2Fcourse_materials%2Flec-01-28%2Ffork-with-exec.c*/
-		if ( FILE == NULL/* search directory; command not found*/) { perror("Command not found. \n"); continue; /* take in another user's input */}
-
-		execute_cmd(argv_user, argv_no);
+		/* 4.2 execute the commands */
+		execute_cmd(argv_user, argv_no, cwd);
 		
 	}
 

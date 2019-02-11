@@ -7,7 +7,7 @@ ls -l | grep .c
 
 ls -l | wc -l
 
-ps | grep 
+ps | grep  
 
 cat <filename>
 
@@ -22,6 +22,10 @@ cd <dirname>
 ls
 
 cat <filename>
+
+debugging:
+
+ps -ef | grep root (segmentation fault)
 
 
 

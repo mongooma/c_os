@@ -1,4 +1,16 @@
-#include functions.h
+#include <stdio.h>
+#include <stdlib.h>
+#include <dirent.h> 
+#include <string.h>
+#include <ctype.h>
+#include <unistd.h> //for unix
+#include <errno.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/wait.h>
+
+#include "functions.h"
+
 #define MAX_CMD_LEN 1024 // user's input command
 #define MAX_ARGV_LEN 64 // each argv in the command
 #define MAX_PATH_LEN 1024 // a dir path
@@ -66,6 +78,13 @@ int getCmd(const char * buffer, char ** argv) {
 	arg_buffer[j] = '\0';
 	argv[k] = calloc(strlen(arg_buffer) + 1, sizeof(char)); 
 	strcpy(argv[k], arg_buffer); 
+
+	#ifdef DEBUG
+	for(int i = 0; i < k+1; i ++){
+
+		printf("%s len: %d\n", argv[i], (int) strlen(argv[i]));
+	}
+	#endif
 
 	free(arg_buffer);
 	
@@ -197,17 +216,96 @@ char * searchPath(const char * PATH, const char * cmd) {
 	}
 	/*if nothing's found*/
 	free(p);
-	return NULL;
+	#ifdef DEBUG
+		printf("debug:cmd not found \n");
+		fflush(stdout);
+	#endif
+	return "nan";
 }
 
 
 
-int execute_cmd(char * argv, int argv_no){
+int execute_cmd(char ** argv, const int argv_no, const char * cwd){
 	/* to debug */
 
 	/* At parent process */
 
-	if (/*pipe*/){
+	/* 4.2.1 special case cd, exit*/
+
+	if (strcmp(argv[0], "cd") == 0 /* todo: check string comparison*/) {
+
+		/* change directory in the parent process*/
+
+		if (argv_no < 2) { chdir(getenv("HOME")); /* as requested in the hw2 pdf*/}
+		if (argv_no > 2) { printf("man cd; cd <dir_name>\n"); }
+
+		int r = chdir(argv[1]); 
+		if (r == -1){perror("");}
+
+	}
+
+	if (strcmp(argv[0], "exit") == 0 ){
+
+		/* exit parent process*/
+
+		if (argv_no > 2) {perror("man exit\n");}
+		printf("bye\n");
+		exit(0); /* terminate the whole process*/
+
+	}
+
+	/* 4.2.2 general case cmd parse */
+
+	char ** new_arg = calloc(argv_no, sizeof(char *));
+	char * FILE = calloc(MAX_FILEPATH_LEN, sizeof(char)); 
+	int new_arg_len = 0;
+
+	int parsePipe(){
+		/* internal function, with side-effect:
+			argv,
+			new_arg,
+			new_arg_len,
+
+			*/
+		/* if with pipe: argvs for each process are appended with NULL; NULL has replaced | in the argv */
+		/* if pipe, return a new second cmd, with the original argv store the first cmd;
+			if not pipe, return argv */
+
+		int p = 0;
+		int i = 0;
+		int j = 0;
+
+		while(i < argv_no){
+			if (strcmp(argv[i], "|") == 0 ){ /* detect '|'*/
+				p = 1;
+				argv[i] = NULL;  /* NULL could stop execvp from parsing the rest cmd*/
+			}
+			i ++;
+			#ifdef DEBUG
+			printf("parsePipe: %s \n", argv[i]); /* print 2 times when call "ps |" */
+			fflush(stdout);
+			#endif
+
+			if (p == 1){
+				new_arg[j] = calloc(MAX_ARGV_LEN, sizeof(char));
+				strcpy(new_arg[j], argv[i]);
+				j++;
+			}
+		}
+		new_arg[j] = NULL;
+		new_arg_len = j;
+
+		return p;
+
+	}
+
+	int p = parsePipe();
+
+	#ifdef DEBUG
+		printf("with pipe: %d \n", p);
+	#endif
+
+	if (p == 1){
 
 		/* if with one pipe
 			
@@ -223,53 +321,87 @@ int execute_cmd(char * argv, int argv_no){
 		pid_t pid_2 = fork(); /* command after the pipe*/
 		int p[2];
 		int rc = pipe(p);
+		if(rc == -1){printf("pipe failed \n");}
 
-		if(pid_1 == 0){
+		if(pid_1 == 0){/* CHILD PROCESS FOR pipe write end*/
 
+			close(p[0]);
 			/* redirect stdout to p[1]*/
 			dup2(p[1], 1); /* stdout is using the address of fd p[1]*/
-			execvp();
+			strcpy(FILE, searchPath(getenv("MYPATH"), argv[0]));/* search $MYPATH */;
+			chdir(cwd); /* this is to deal with the side-effect of using searchPath() */
+
+			if ( strcmp(FILE, "nan") == 0/* search directory; command not found*/) { perror("Command not found. \n");}
+
+			execvp(FILE, argv);
+			close(p[1]); /* if exec fail will come to this*/
 
 
-		}else{}; // for pipe, parent doesn't wait for the first command to end regardless of '&'
 
-		if(pid_2 == 0){
+		} else if(pid_2 == 0){/* CHILD PROCESS FOR pipe read end*/
 
+			close(p[1]);
 			dup2(p[0], 0); /* stdin is using the address of fd p[0]*/
-			execvp();
-
-		}else{ /* only check if the second cmd has terminated & any background process has terminated*/
-
 			
+			#ifdef DEBUG
+				printf("pipe: read: \n");
+				fflush(stdout);
+			#endif
+			strcpy(FILE, searchPath(getenv("MYPATH"), new_arg[0]));/* search $MYPATH */;
+			chdir(cwd); /* this is to deal with the side-effect of using searchPath() */
 
-			if(/* not &*/){
+			if ( strcmp(FILE, "nan") == 0/* search directory; command not found*/) { perror("Command not found. \n");}
+
+			/* take care of the end '&' symbol */
+			if(strcmp(argv[argv_no-1], "&") != 0){ /* notice that we did't append NULL to the end of argv*/
+				execvp(FILE, new_arg);
+
+			}else{
+				new_arg[new_arg_len-1] = NULL;
+				execvp(FILE, argv);	
+			}
+
+			close(p[0]); /* if exec fail will come to this */
+
+		} else { /* PARENT PROCESS*/
+
+			#ifdef DEBUG
+				printf("pipe: parent: \n");
+			#endif
+			if(strcmp(argv[argv_no-1], "&") != 0){ /* only check if the second cmd has terminated & any background process has terminated*/
 
 				int status;
 				pid_t child_pid;
 
 				while (1) {
-					child_pid = waitpid(pid_2, &status, WNOHANG); 
-					if (child_pid != 0) break;
+					child_pid = waitpid(0, &status, WNOHANG); 
+
+					if ((child_pid != -1) && (child_pid != pid_2) && (child_pid != pid_1) ){ /* some background process has terminated */
+						printf("[process %d terminated with exit status %d]", child_pid, status); 
+					}
+					
+					if ((child_pid == -1) | (child_pid == pid_2)) break;
 					sleep(1);
 				}
 
 				if (child_pid == -1) {
-					printf("waitpid() failed for child process %d \n", pid);
+					printf("waitpid() failed for child process %d \n", pid_2);
 				}
-
-				if(/* the terminated process is a background process; maintain a pid table for background processes*/){
-					printf("[process %d terminated with exit status %d]", pid_1, status); /* todo: child's pid is only visible to parent; another way is to check parent's waitpid after each command*/
-				}
-
 
 			}else{
 
-				printf("[running background process \"%s\"]\n", argv[0]);
+				printf("[running background process \"%s\"]\n", argv[0]); /* todo: whose pid to print? */
 
 			}
+
+			close(p[0]);
+			close(p[1]);
 		}
 
-	} else {
+	} else { /* if no pipe */
+
+			argv = realloc(argv, (argv_no + 1) * sizeof(char *)); /* if no pipe, parsePipe is not executed, we need to append a NULL to argv*/
+			argv[argv_no] = NULL;
 
 			pid_t pid = fork(); /* each time execute one command*/
 		
@@ -277,20 +409,40 @@ int execute_cmd(char * argv, int argv_no){
 				perror("fork() failed \n"); 
 				return EXIT_FAILURE;
 			}
-			else if( pid == 0){
-				/*CHILD PROCESS*/
-				execute_cmd(argv, argv_no);
+			else if( pid == 0){/*CHILD PROCESS*/
+				
+				strcpy(FILE, searchPath(getenv("MYPATH"), argv[0]));/* search $MYPATH */;
+				chdir(cwd); /* this is to deal with the side-effect of using searchPath() */
+
+			#ifdef DEBUG
+			printf("FILE: %s \n", FILE);
+			fflush(stdout);
+			#endif
+				if ( strcmp(FILE, "nan") == 0/* search directory; command not found*/) { perror("Command not found. \n");}
+
+				/* deal with the '&' symbol in the end */
+				if ( strcmp(argv[argv_no-1], "&") != 0  /*foreground processing*/) {
+					execvp(FILE, argv);
+				} else{
+					argv[argv_no-1] = NULL;
+					execvp(FILE, argv);	
+				}
 
 			}
-			else {
-				/*PARENT PROCESS*/ 
+			else {/*PARENT PROCESS*/ 
+				
 				int status;
 				pid_t child_pid;
 
+
 				if ( strcmp(argv[argv_no-1], "&") != 0  /*foreground processing*/) {
-					while (1) { /* todo: also check if any background process has terminated */
-						child_pid = waitpid(pid, &status, WNOHANG); /* wait in the parent process for the child process to finish*/
-						if (child_pid != 0) break;/*-1 on error; 0 on not changed; pid on success*/
+					while (1) { /* also check if any background process has terminated */
+						child_pid = waitpid(0, &status, WNOHANG); /* wait in the parent process for the child process to change status*/
+						if ((child_pid != pid) && (child_pid != -1) && (child_pid != 0)){
+							printf("[process %d terminated with status %d] \n", child_pid, status);
+							kill(child_pid, SIGKILL);
+						}
+						if ((child_pid == -1) | (child_pid == pid)) break;/*-1 on error; 0 on not changed; pid on success*/
 						sleep(1);
 					}
 
@@ -298,12 +450,21 @@ int execute_cmd(char * argv, int argv_no){
 						printf("waitpid() failed for child process %d \n", pid);
 					}
 
+
+
+
 				}
 				else { /* background processing */
-					printf("[running background process \"%s\"]\n", argv[0]);
+					printf("[running background process \"%s\"]\n", argv[0]); /* check exact output*/
+					printf("%s$ ", getcwd(NULL, 0)); /* todo, TRY POSIX.1-2001 Standard, check man page*/
 				}
 			}
 	}
+
+	return 0; 
+
+	free(new_arg);
+	free(FILE);
 
 }
 	
