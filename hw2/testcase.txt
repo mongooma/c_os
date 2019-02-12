@@ -23,9 +23,33 @@ ls
 
 cat <filename>
 
+ps | less
+
+
 debugging:
 
-ps -ef | grep root (segmentation fault)
+ps -ef | grep root 
+
+
+----
+
+current issues:
+
+
+1. can only allocate 3 blocks of argv_user:
+	(notice that within getCmd(), argv get allocated fine)
+
+	passed:
+	cat testcase.txt |  
+
+	failed:
+	cat testcase.txt | more --> cat be 0x0, | cannot access memory
+	wc -l testcase.txt |  ---> wc be 0x0, | cannot access memory
+
+	this issue is related to function pass by pointer
+		try to find a way to check the memory maintained by the function and eny changes after it's returned
+
+		
 
 
 

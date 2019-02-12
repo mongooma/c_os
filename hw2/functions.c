@@ -37,7 +37,7 @@ int * trimEndSpace(char * buffer) {
 }
 
 
-int getCmd(const char * buffer, char ** argv) {
+argv_data getCmd(const char * buffer, argv_data d) {
 	/* read buffer and store each argument in char ** argv*/
 	/* argv has initial 1 block and will be extended after this function:
 		*/
@@ -49,7 +49,7 @@ int getCmd(const char * buffer, char ** argv) {
 
 	char *arg_buffer = calloc(MAX_ARGV_LEN + 1, sizeof(char)); /* temp, freed after*/
 
-	int i = 0;
+	int i = 0; 
 	int j = 0;
 	int k = 0;
 	
@@ -57,18 +57,17 @@ int getCmd(const char * buffer, char ** argv) {
 		if (isspace(buffer[i])) {
 			
 			arg_buffer[j] = '\0';
-			
-			argv[k] = calloc(strlen(arg_buffer) + 1, sizeof(char));
-			strcpy(argv[k], arg_buffer); 
+			d.argv_user[k] = calloc(strlen(arg_buffer) + 1, sizeof(char));
+			strcpy(d.argv_user[k], arg_buffer); 
 			
 			k++; // for argv
-			argv = realloc(argv, (k+1) * sizeof(char *)); /* extend one block for argv, the new block is not initialized*/
+			d.argv_user = realloc(d.argv_user, (k+1) * sizeof(char *)); /* extend one block for argv, the new block is not initialized*/
 			j = 0;
 
 		}
 		else {
 			
-			arg_buffer[j] = buffer[i];
+			arg_buffer[j] = buffer[i]; /* bad pointer assignment (?)*/
 			j++; // for argv_buffer
 
 		}
@@ -76,19 +75,22 @@ int getCmd(const char * buffer, char ** argv) {
 	}
 	/*dealing with the last argument*/
 	arg_buffer[j] = '\0';
-	argv[k] = calloc(strlen(arg_buffer) + 1, sizeof(char)); 
-	strcpy(argv[k], arg_buffer); 
+	d.argv_user[k] = calloc(strlen(arg_buffer) + 1, sizeof(char)); 
+	strcpy(d.argv_user[k], arg_buffer); 
 
-	#ifdef DEBUG
+	free(arg_buffer); //this free will not change argv
+
+	#ifdef DEBUG_pass
 	for(int i = 0; i < k+1; i ++){
 
-		printf("%s len: %d\n", argv[i], (int) strlen(argv[i]));
+		//printf("%s len: %d\n", argv_user[i], (int) strlen(argv_user[i]));
+		printf("%s len: %d\n", d.argv_user[0], (int) strlen(d.argv_user[0]));
 	}
 	#endif
 
-	free(arg_buffer);
-	
-	return k+1;
+	d.argv_no[0] = (int)(k+1);
+
+	return d; // actual number of argv
 }
 
 
@@ -216,7 +218,7 @@ char * searchPath(const char * PATH, const char * cmd) {
 	}
 	/*if nothing's found*/
 	free(p);
-	#ifdef DEBUG
+	#ifdef DEBUG_pass
 		printf("debug:cmd not found \n");
 		fflush(stdout);
 	#endif
@@ -231,6 +233,12 @@ int execute_cmd(char ** argv, const int argv_no, const char * cwd){
 	/* At parent process */
 
 	/* 4.2.1 special case cd, exit*/
+	#ifdef DEBUG_pass
+		printf("in execute_cmd: argv[0] %s \n", argv[0]); // couldn't read argv when cmd is "ps -ef | grep", 
+		printf("strcmp argv[0], 'cd', %d \n", strcmp(argv[0], "cd"));
+
+
+	#endif
 
 	if (strcmp(argv[0], "cd") == 0 /* todo: check string comparison*/) {
 
@@ -240,7 +248,9 @@ int execute_cmd(char ** argv, const int argv_no, const char * cwd){
 		if (argv_no > 2) { printf("man cd; cd <dir_name>\n"); }
 
 		int r = chdir(argv[1]); 
-		if (r == -1){perror("");}
+		if (r == -1){perror("Error returned by perror: ");}
+
+		return 0;
 
 	}
 
@@ -276,21 +286,27 @@ int execute_cmd(char ** argv, const int argv_no, const char * cwd){
 		int j = 0;
 
 		while(i < argv_no){
-			if (strcmp(argv[i], "|") == 0 ){ /* detect '|'*/
+			int rc = strcmp(argv[i], "|");
+			if (rc == 0 ){ /* detect '|'*/
 				p = 1;
 				argv[i] = NULL;  /* NULL could stop execvp from parsing the rest cmd*/
+				if (i == argv_no - 1){perror("Nothing after pipe: \n"); return -1;}
+				i++;
+
 			}
-			i ++;
-			#ifdef DEBUG
-			printf("parsePipe: %s \n", argv[i]); /* print 2 times when call "ps |" */
+	
+			#ifdef DEBUG_pass
+			printf("parsePipe: %s \n", argv[i]); 
 			fflush(stdout);
 			#endif
 
 			if (p == 1){
 				new_arg[j] = calloc(MAX_ARGV_LEN, sizeof(char));
-				strcpy(new_arg[j], argv[i]);
+				new_arg[j] = strcpy(new_arg[j], argv[i]);
 				j++;
 			}
+
+			i++;
 		}
 		new_arg[j] = NULL;
 		new_arg_len = j;
@@ -301,7 +317,9 @@ int execute_cmd(char ** argv, const int argv_no, const char * cwd){
 
 	int p = parsePipe();
 
-	#ifdef DEBUG
+	if(p == -1) return 0; /* pipe cmd abnormal*/
+
+	#ifdef DEBUG_pass
 		printf("with pipe: %d \n", p);
 	#endif
 
@@ -317,33 +335,38 @@ int execute_cmd(char ** argv, const int argv_no, const char * cwd){
 
 		*/
 
-		pid_t pid_1 = fork(); /* command before the pipe*/
-		pid_t pid_2 = fork(); /* command after the pipe*/
 		int p[2];
 		int rc = pipe(p);
 		if(rc == -1){printf("pipe failed \n");}
 
+		pid_t pid_1 = fork(); /* command before the pipe*/
 		if(pid_1 == 0){/* CHILD PROCESS FOR pipe write end*/
 
-			close(p[0]);
+			close(p[0]); /* close read */
 			/* redirect stdout to p[1]*/
+			close(1); /* close stdout */
 			dup2(p[1], 1); /* stdout is using the address of fd p[1]*/
+			close(p[1]); /* after the writing has finished, close write */
+
 			strcpy(FILE, searchPath(getenv("MYPATH"), argv[0]));/* search $MYPATH */;
 			chdir(cwd); /* this is to deal with the side-effect of using searchPath() */
 
 			if ( strcmp(FILE, "nan") == 0/* search directory; command not found*/) { perror("Command not found. \n");}
 
 			execvp(FILE, argv);
-			close(p[1]); /* if exec fail will come to this*/
+			perror("pipe write error:\n"); /* if exec fail will come to this*/
 
+		}
 
+		pid_t pid_2 = fork(); /* command after the pipe*/
+		if(pid_2 == 0){/* CHILD PROCESS FOR pipe read end*/
 
-		} else if(pid_2 == 0){/* CHILD PROCESS FOR pipe read end*/
-
-			close(p[1]);
+			close(p[1]); /* close write */
+			close(0); /* close stdin */
 			dup2(p[0], 0); /* stdin is using the address of fd p[0]*/
+			close(p[0]); /* after read, close read*/
 			
-			#ifdef DEBUG
+			#ifdef DEBUG_pass
 				printf("pipe: read: \n");
 				fflush(stdout);
 			#endif
@@ -354,6 +377,12 @@ int execute_cmd(char ** argv, const int argv_no, const char * cwd){
 
 			/* take care of the end '&' symbol */
 			if(strcmp(argv[argv_no-1], "&") != 0){ /* notice that we did't append NULL to the end of argv*/
+				#ifdef DEBUG
+					for(int i = 9; i < new_arg_len; i++){
+						printf("%s \n", new_arg[i]);
+					}
+
+				#endif
 				execvp(FILE, new_arg);
 
 			}else{
@@ -361,11 +390,11 @@ int execute_cmd(char ** argv, const int argv_no, const char * cwd){
 				execvp(FILE, argv);	
 			}
 
-			close(p[0]); /* if exec fail will come to this */
+			perror("pipe read error:\n"); /* if exec fail will come to this */
 
 		} else { /* PARENT PROCESS*/
 
-			#ifdef DEBUG
+			#ifdef DEBUG_pass
 				printf("pipe: parent: \n");
 			#endif
 			if(strcmp(argv[argv_no-1], "&") != 0){ /* only check if the second cmd has terminated & any background process has terminated*/
@@ -374,9 +403,9 @@ int execute_cmd(char ** argv, const int argv_no, const char * cwd){
 				pid_t child_pid;
 
 				while (1) {
-					child_pid = waitpid(0, &status, WNOHANG); 
+					child_pid = waitpid(0, &status, WNOHANG);  /* 0: Child process having the same group ID (?) */
 
-					if ((child_pid != -1) && (child_pid != pid_2) && (child_pid != pid_1) ){ /* some background process has terminated */
+					if ((child_pid != -1) && (child_pid != pid_2) && (child_pid != pid_1) && (child_pid != 0)){ /* some background process has terminated */
 						printf("[process %d terminated with exit status %d]", child_pid, status); 
 					}
 					
@@ -387,10 +416,17 @@ int execute_cmd(char ** argv, const int argv_no, const char * cwd){
 				if (child_pid == -1) {
 					printf("waitpid() failed for child process %d \n", pid_2);
 				}
+				free(new_arg);
+				free(FILE);
+				return 0; 
 
 			}else{
 
 				printf("[running background process \"%s\"]\n", argv[0]); /* todo: whose pid to print? */
+				
+				free(new_arg);
+				free(FILE);
+				return 0; 
 
 			}
 
@@ -414,7 +450,7 @@ int execute_cmd(char ** argv, const int argv_no, const char * cwd){
 				strcpy(FILE, searchPath(getenv("MYPATH"), argv[0]));/* search $MYPATH */;
 				chdir(cwd); /* this is to deal with the side-effect of using searchPath() */
 
-			#ifdef DEBUG
+			#ifdef DEBUG_pass
 			printf("FILE: %s \n", FILE);
 			fflush(stdout);
 			#endif
@@ -450,21 +486,21 @@ int execute_cmd(char ** argv, const int argv_no, const char * cwd){
 						printf("waitpid() failed for child process %d \n", pid);
 					}
 
-
+					free(new_arg);
+					free(FILE);
+					return 0;
 
 
 				}
 				else { /* background processing */
 					printf("[running background process \"%s\"]\n", argv[0]); /* check exact output*/
-					printf("%s$ ", getcwd(NULL, 0)); /* todo, TRY POSIX.1-2001 Standard, check man page*/
+					free(new_arg);
+					free(FILE);
+					return 0;
+
 				}
 			}
 	}
-
-	return 0; 
-
-	free(new_arg);
-	free(FILE);
-
+	return 0;
 }
 	

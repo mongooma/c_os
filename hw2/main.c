@@ -26,7 +26,6 @@ Use C to implement a rudimentary interactive shell similar to that of bash.
 #define MAX_PATH_LEN 1024 // a dir path
 #define MAX_FILEPATH_LEN 1024 // a file path
 
-
 int main(int argc, char ** argv) {
 	/* before you run, set the $MYPATH in the bash shell 
 		MYPATH=/usr/local/bin#/usr/bin#/bin#.
@@ -44,8 +43,10 @@ int main(int argc, char ** argv) {
 	/* You may also assume that command-line arguments do not contain spaces.
 	*/
 	char *buffer = calloc(MAX_CMD_LEN + 1, sizeof(char));
-	char **argv_user = calloc(1, sizeof(char *)); /*temporarily assign 1 block for argv array*/
-	int argv_no;
+	argv_data argv_tuple;
+	argv_tuple.argv_user = calloc(1, sizeof(char *)); /*temporarily assign 1 block for argv array*/
+	argv_tuple.argv_no = calloc(1, sizeof(int));
+
 	char * cwd = calloc(MAX_PATH_LEN, sizeof(char));
 
 	strcpy(cwd, getcwd(NULL, 0)); /* RESTORE cwd when needed */
@@ -65,8 +66,15 @@ int main(int argc, char ** argv) {
 
 		trimEndSpace(buffer);
 		
-		argv_no = getCmd(buffer, argv_user);  /* argv_user is changed after this*/
+		argv_tuple = getCmd(buffer, argv_tuple);  /* argv_user is changed after this*/
+		/* must set a return value otherwise argv_tuple will be modified by returning; weird*/
 
+	#ifdef DEBUG_pass
+	for(int i = 0; i < argv_tuple.argv_no[0]; i ++){
+		//printf("%s len: %d\n", argv_user[i], (int) strlen(argv_user[i]));
+		printf("%s len: %d\n", argv_tuple.argv_user[0], (int) strlen(argv_tuple.argv_user[0]));
+	}
+	#endif
 
 		/* 4. To execute the given command, a child process is created via fork()*/
 
@@ -82,7 +90,7 @@ int main(int argc, char ** argv) {
 		}
 
 		/* 4.2 execute the commands */
-		execute_cmd(argv_user, argv_no, cwd);
+		execute_cmd(argv_tuple.argv_user, argv_tuple.argv_no[0], cwd);
 		
 	}
 
