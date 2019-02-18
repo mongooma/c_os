@@ -59,14 +59,17 @@ int main(int argc, char ** argv) {
 
 		/* 2. use fgets() to read in a command from the user */
 		fgets(buffer, MAX_CMD_LEN, stdin);
+		if(strcmp(buffer, "\n") == 0 ){
+			continue; /* deal with single \n user input*/
+		}
 		/* 3. extract command from buffer */
 
-		trimEndSpace(buffer);
+		trimStartEndSpace(buffer);
 		
 		argv_tuple = getCmd(buffer, argv_tuple);  /* argv_user is changed after this*/
 		/* must set a return value otherwise argv_tuple will be modified by returning; weird*/
 
-		#ifdef DEBUG_pass
+		#ifdef DEBUG
 		for(int i = 0; i < argv_tuple.argv_no[0]; i ++){
 			//printf("%s len: %d\n", argv_user[i], (int) strlen(argv_user[i]));
 			printf("%s len: %d\n", argv_tuple.argv_user[0], (int) strlen(argv_tuple.argv_user[0]));

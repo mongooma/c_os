@@ -18,7 +18,7 @@
 #define MAX_FILEPATH_LEN 1024 // a file path
 
 /*In C and C++ programming, arrays are always passed to funcs by pointer*/
-int * trimEndSpace(char * buffer) {
+int trimStartEndSpace(char * buffer) {
 	/* ATTENTION: We are going to change buffer here*/
 	/* buffer has to be in dynamically allocated memory*/
 	/* the buffer is trimmed*/
@@ -28,6 +28,17 @@ int * trimEndSpace(char * buffer) {
 	for (int i = strlen(buffer)-1; i > 0; i--) {
 		if (isspace(buffer[i])) { /* somehow ==' ' is not effective, check for all whitespaces */
 			buffer[i] = '\0';
+		}
+		else {
+			break;
+		}
+
+	}
+
+	for (int i = 0; i < strlen(buffer); i++) {
+		if (isspace(buffer[i])) { /* somehow ==' ' is not effective, check for all whitespaces */
+			strcpy(buffer, buffer + (i+1)); 
+			i = 0;
 		}
 		else {
 			break;
@@ -79,6 +90,7 @@ argv_data getCmd(const char * buffer, argv_data d) {
 		i++; 
 	}
 	/*dealing with the last argument*/
+
 	arg_buffer[j] = '\0';
 	d.argv_user[k] = calloc(strlen(arg_buffer) + 1, sizeof(char)); 
 	strcpy(d.argv_user[k], arg_buffer); 
@@ -87,9 +99,7 @@ argv_data getCmd(const char * buffer, argv_data d) {
 
 	#ifdef DEBUG
 	for(int i = 0; i < k+1; i ++){
-
-		//printf("%s len: %d\n", argv_user[i], (int) strlen(argv_user[i]));
-		printf("%s len: %d\n", d.argv_user[0], (int) strlen(d.argv_user[0]));
+		printf("%s len: %d\n", d.argv_user[i], (int) strlen(d.argv_user[i]));
 	}
 	#endif
 
@@ -110,9 +120,10 @@ int searchSinglePath(const char * p, const char * s) {
 		printf("searchSinglePath: path %s\n", p);
 	#endif //debug
 
-	
-	char * cwd = getcwd(NULL, 0);
-	chdir(p);
+	char * cwd = calloc(MAX_PATH_LEN, sizeof(char));
+	strcpy(cwd, getcwd(NULL, 0));
+
+	chdir(p); // somehow we need to be under this path
 
 	DIR * dir = opendir(p);   /* open the directory specified by p*/
 	if (dir == NULL)
@@ -146,23 +157,22 @@ int searchSinglePath(const char * p, const char * s) {
 
 		if (strcmp(file->d_name, s) == 0) 
 		{
-			if (S_IXUSR & buf.st_mode) { /* S_IXUSR: macro mask value; 
-											if the owner has exec permission
-											*/
-
-				//printf(" -- exe file\n");
-				return 0;
-			}else{
-
+			if (S_IXUSR & buf.st_mode == 0) { /* S_IXUSR: macro mask value; 
+											if the owner has exec permission										*/
 				printf("No exec permission \n");
+				chdir(cwd);
 				return 1;
+			}else{
+				chdir(cwd);
+				return 0;
 			}
 		}
 
 	}
-	/* nothing related is found*/
+	/* if nothing related is found*/
+
 	closedir(dir);
-	chdir(cwd); /* cancel out the side-effect */
+	chdir(cwd);
 
 	return -1;
 }
@@ -248,7 +258,8 @@ int execute_cmd(char ** argv, const int argv_no){
 	#ifdef DEBUG
 		printf("in execute_cmd: argv[0] %s \n", argv[0]); // couldn't read argv when cmd is "ps -ef | grep", 
 		printf("strcmp argv[0], 'cd', %d \n", strcmp(argv[0], "cd"));
-
+		printf("argv_no, %d \n", argv_no);
+		printf("execute_cmd: we are at %s \n", getcwd(NULL, 0)); /* todo, TRY POSIX.1-2001 Standard, check man page*/
 
 	#endif
 
@@ -276,6 +287,7 @@ int execute_cmd(char ** argv, const int argv_no){
 		exit(0); /* terminate the whole process*/
 
 	}
+
 	/************************/
 
 	/* handling normal kind of cmds */
@@ -293,6 +305,9 @@ int execute_cmd(char ** argv, const int argv_no){
 
 	if(	p == 1 ){ /* with pipe */
 		pid_t pid_1, pid_2;
+		#ifdef DEBUG
+		printf("execute_cmd: before pipe exec, we are at %s \n", getcwd(NULL, 0)); /* todo, TRY POSIX.1-2001 Standard, check man page*/
+		#endif
 		exec_pipe_2(argv, argv_no, new_arg, new_arg_len, &pid_1, &pid_2); // special pipe case for hw2 
 		/* will return in parent process*/
 
@@ -302,6 +317,9 @@ int execute_cmd(char ** argv, const int argv_no){
 
 	}else{ /*without pipe */
 		pid_t pid;
+		#ifdef DEBUG
+		printf("execute_cmd: before exec, we are at %s \n", getcwd(NULL, 0)); /* todo, TRY POSIX.1-2001 Standard, check man page*/
+		#endif
 		exec_(argv, argv_no, &pid);
 		/* will return in parent process*/;
 
@@ -337,7 +355,7 @@ int parsePipe(int argv_no, char ** argv, char ** new_arg, int * new_arg_len){
 		int rc = strcmp(argv[i], "|");
 		if (rc == 0 ){ /* detect '|'*/
 			p = 1;
-			argv[i] = NULL;  /* NULL could stop execvp from parsing the rest cmd*/
+			argv[i] = NULL;  /* NULL could stop execv from parsing the rest cmd*/
 			if (i == argv_no - 1){perror("Nothing after pipe: \n"); return -1;}
 			i++;
 
@@ -405,7 +423,7 @@ int exec_pipe_2(char ** argv, int argv_no, char ** new_arg, int new_arg_len, pid
 
 		if ( strcmp(FILE, "nan") == 0/* search directory; command not found*/) { perror("Command not found. \n");}
 
-		execvp(FILE, argv);  /* new image */
+		execv(FILE, argv);  /* new image */
 		perror("pipe write error:\n"); /* if exec fail will come to this*/
 
 	}
@@ -419,7 +437,7 @@ int exec_pipe_2(char ** argv, int argv_no, char ** new_arg, int new_arg_len, pid
 		close(p[0]); /* after read, close read*/
 		
 		#ifdef DEBUG
-			printf("pipe: read: \n");
+			printf("pipe: read (not an error): \n");
 			fflush(stdout);
 		#endif
 		strcpy(FILE, searchPath(getenv("MYPATH"), new_arg[0]));/* search $MYPATH */;
@@ -428,7 +446,10 @@ int exec_pipe_2(char ** argv, int argv_no, char ** new_arg, int new_arg_len, pid
 
 		new_arg = realloc(new_arg, (new_arg_len + 1) * sizeof(char *));
 		new_arg[new_arg_len] = NULL;
-		execvp(FILE, new_arg); /* new image */
+		if(strcmp(argv[argv_no-1], "&") == 0){
+			new_arg[new_arg_len-1] = NULL;
+		}
+		execv(FILE, new_arg); /* new image */
 		perror("pipe read error:\n"); /* if exec fail will come to this */
 
 	} 
@@ -449,15 +470,15 @@ int exec_pipe_2(char ** argv, int argv_no, char ** new_arg, int new_arg_len, pid
 
 			if ((child_pid_1 != 0) || (child_pid_2 != 0)){
 
-				if(child_pid_1 != 0){
+				if(child_pid_1 != *pid_1){
 
 					printf("[Process %d terminated with status %d.]", child_pid_1, status1);
-					kill(child_pid_1, SIGKILL); /* have to manually kill it, check actual bash behavior */
+					kill(child_pid_1, SIGINT); /* have to manually kill it, check actual bash behavior */
 
-				}else if(child_pid_2 != 0){
+				}else if(child_pid_2 != *pid_2){
 
 					printf("[Process %d terminated with status %d.]", child_pid_2, status2);
-					kill(child_pid_2, SIGKILL); /* have to manually kill it, check actual bash behavior */
+					kill(child_pid_2, SIGINT); /* have to manually kill it, check actual bash behavior */
 
 				}else if((child_pid_1 != 0) && (child_pid_2 != 0)){ /* finish execution and return to main*/
 
@@ -475,6 +496,7 @@ int exec_pipe_2(char ** argv, int argv_no, char ** new_arg, int new_arg_len, pid
 	}else{ /* background processing */
 
 		printf("[running background process \"%s\"]\n", new_arg[0]); /* todo: print second cmd name */
+		printf("%s$ ", getcwd(NULL, 0)); /* todo, TRY POSIX.1-2001 Standard, check man page*/
 
 	}
 
@@ -495,6 +517,10 @@ int exec_(char ** argv, int argv_no, pid_t * pid){
 	/* Execute the common cmd
 
 	*/
+	#ifdef DEBUG
+	printf("exec_: 0 pos, we are at %s \n", getcwd(NULL, 0)); /* todo, TRY POSIX.1-2001 Standard, check man page*/
+	#endif
+
 	char * FILE = calloc(MAX_FILEPATH_LEN, sizeof(char)); 
 	*pid = fork();
 	if ( *pid == -1 ) { /* child process creation failed*/ 
@@ -510,32 +536,49 @@ int exec_(char ** argv, int argv_no, pid_t * pid){
 
 		argv = realloc(argv, (argv_no + 1) * sizeof(char *));
 		argv[argv_no] = NULL;
-		execvp(FILE, argv); /* todo: null terminate it first*/
-		perror("pipe write error:\n"); /* if exec fail will come to this*/
+
+		if(strcmp(argv[argv_no-1], "&") == 0){
+			argv[argv_no-1] = NULL;
+		}
+		#ifdef DEBUG
+		printf("exec_: we are at %s \n", getcwd(NULL, 0)); /* todo, TRY POSIX.1-2001 Standard, check man page*/
+		#endif
+		execv(FILE, argv);
 
 	}
 
 	/* parent process */
-	int status;
-	pid_t child_pid;
+	if(strcmp(argv[argv_no-1], "&") != 0){ /* foreground processing*/
+		#ifdef DEBUG
+		printf("exec_: not a background process. \n");
+		#endif
 
-	while (1) {
+		int status;
+		pid_t child_pid;
 
-		child_pid = waitpid(0, &status, WNOHANG);  /* 0: Child process having the same group ID (?) */
+		while (1) {
 
-		if(child_pid != 0){
-			if(child_pid == *pid){
-				break;
-			}else{
-				printf("[Process %d terminated with status %d.]", child_pid, status);
-				kill(child_pid, SIGKILL); /* have to manually kill it, check actual bash behavior */
+			child_pid = waitpid(0, &status, WNOHANG);  /* 0: Child process having the same group ID (?) */
+
+			if(child_pid != 0){
+				if(child_pid == *pid){
+					break;
+				}else{
+					printf("[Process %d terminated with status %d.]", child_pid, status);
+					kill(child_pid, SIGKILL); /* have to manually kill it, check actual bash behavior */
+				}
 			}
+			sleep(1);
 		}
-		sleep(1);
-	}
 
-	if (child_pid == -1) {
-		printf("waitpid() failed for child process %d \n", *pid);
+		if (child_pid == -1) {
+			printf("waitpid() failed for child process %d \n", *pid);
+		}
+	}else{
+
+		printf("[running background process \"%s\"]\n", argv[0]); /* todo: print second cmd name */
+		printf("%s$ ", getcwd(NULL, 0)); /* todo, TRY POSIX.1-2001 Standard, check man page*/
+
 	}
 
 	free(FILE);

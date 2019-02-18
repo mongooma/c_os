@@ -7,7 +7,7 @@ typedef struct {
 
 }argv_data;
 
-int * trimEndSpace(char * buffer);
+int trimStartEndSpace(char * buffer);
 
 argv_data getCmd(const char * buffer, argv_data d);
 

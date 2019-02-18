@@ -1,3 +1,5 @@
+cd /mnt/c/Users/Mark/Documents/courses/os/code_project/hw2
+
 export MYPATH=/usr/local/bin#/usr/bin#/bin#.
 
 # some test cases for hw2
@@ -6,8 +8,6 @@ export MYPATH=/usr/local/bin#/usr/bin#/bin#.
 ls
 
 ls -l | grep .c
-
-ls -l | wc -l
 
 ps | grep  
 
@@ -25,16 +25,31 @@ ps | less
 
 cat | more
 
-
 --
 
 passed:
 
-exit
-
 ps -ef
 
 cd
+
+ls -l | wc -l
+
+ls -l | head -10
+
+| more
+
+| less
+
+exit
+
+& 
+
+
+
+
+
+
 
 
 
@@ -54,9 +69,6 @@ debugging:
 ----
 
 current issues:
-
-1. pipe second cmd won't exit (check waitpid) ----> put close() in parent process
-2. exit sometimes will execute twice to exit (check waitpid)
 
 
 
