@@ -68,7 +68,10 @@ debugging:
 
 ----
 
+GOOD NEWS! We have replicate the error with getCmd() : when the data is not explicitly returned, there're some random behaviors - argv[0] will be re-written
+
 current issues:
+1. cat test.txt | more will cause an segmentation fault using valgrind
 
 
 

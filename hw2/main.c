@@ -55,26 +55,35 @@ int main(int argc, char ** argv) {
 		/* 1. Output the current working directory 
 			/User/Mark$ 
 		*/
-		printf("%s$ ", getcwd(NULL, 0)); /* todo, TRY POSIX.1-2001 Standard, check man page*/
+		char * buf = calloc(MAX_FILEPATH_LEN, sizeof(char)); /* do this to avoid lost memories*/
+		printf("%s$ ", getcwd(buf, MAX_FILEPATH_LEN)); /* todo, TRY POSIX.1-2001 Standard, check man page*/
+		free(buf);
 
 		/* 2. use fgets() to read in a command from the user */
 		fgets(buffer, MAX_CMD_LEN, stdin);
-		if(strcmp(buffer, "\n") == 0 ){
-			continue; /* deal with single \n user input*/
-		}
+
 		/* 3. extract command from buffer */
 
 		trimStartEndSpace(buffer);
+
+		if(strcmp(buffer, "\n") == 0 ){
+			continue; /* deal with single \n user input*/
+		}
+
+		if(strcmp(buffer, "exit") == 0 ){
+			printf("bye\n");
+			break; /* deal with single \n user input*/
+		}
 		
 		argv_tuple = getCmd(buffer, argv_tuple);  /* argv_user is changed after this*/
 		/* must set a return value otherwise argv_tuple will be modified by returning; weird*/
 
-		#ifdef DEBUG
-		for(int i = 0; i < argv_tuple.argv_no[0]; i ++){
-			//printf("%s len: %d\n", argv_user[i], (int) strlen(argv_user[i]));
-			printf("%s len: %d\n", argv_tuple.argv_user[0], (int) strlen(argv_tuple.argv_user[0]));
-		}
-		#endif
+		// #ifdef DEBUG
+		// for(int i = 0; i < argv_tuple.argv_no[0]; i ++){
+		// 	//printf("%s len: %d\n", argv_user[i], (int) strlen(argv_user[i]));
+		// 	printf("%s len: %d\n", argv_tuple.argv_user[0], (int) strlen(argv_tuple.argv_user[0]));
+		// }
+		// #endif
 
 		/* 4. To execute the given command, a child process is created via fork()*/
 
@@ -93,7 +102,8 @@ int main(int argc, char ** argv) {
 		#ifdef DEBUG
 		printf("main: we are at %s \n", getcwd(NULL, 0)); /* todo, TRY POSIX.1-2001 Standard, check man page*/
 		#endif
-		execute_cmd(argv_tuple.argv_user, argv_tuple.argv_no[0]);
+
+		int r = execute_cmd(argv_tuple.argv_user, argv_tuple.argv_no[0]);
 		
 	}
 

@@ -95,7 +95,6 @@ argv_data getCmd(const char * buffer, argv_data d) {
 	d.argv_user[k] = calloc(strlen(arg_buffer) + 1, sizeof(char)); 
 	strcpy(d.argv_user[k], arg_buffer); 
 
-	free(arg_buffer); //this free will not change argv
 
 	#ifdef DEBUG
 	for(int i = 0; i < k+1; i ++){
@@ -105,7 +104,8 @@ argv_data getCmd(const char * buffer, argv_data d) {
 
 	d.argv_no[0] = (int)(k+1);
 
-	return d; // actual number of argv
+	free(arg_buffer); //this free will not change argv
+	return d;
 }
 
 
@@ -244,7 +244,7 @@ char * searchPath(const char * PATH, const char * cmd) {
 
 
 
-int execute_cmd(char ** argv, const int argv_no){
+int execute_cmd(char ** argv, int argv_no){
 	/* 	param: argv, an array of strings, i.e {"ls", "-l"} not null terminated
 		param: argv_no, number of argvs
 		return: 
@@ -254,9 +254,9 @@ int execute_cmd(char ** argv, const int argv_no){
 
 	/* At parent process */
 
-	/* 4.2.1 special case cd, exit*/
+	/* 4.2.1 special case cd, exit (taking care of at "main")*/
 	#ifdef DEBUG
-		printf("in execute_cmd: argv[0] %s \n", argv[0]); // couldn't read argv when cmd is "ps -ef | grep", 
+		printf("in execute_cmd: argv[0] %s \n", argv[0]); 
 		printf("strcmp argv[0], 'cd', %d \n", strcmp(argv[0], "cd"));
 		printf("argv_no, %d \n", argv_no);
 		printf("execute_cmd: we are at %s \n", getcwd(NULL, 0)); /* todo, TRY POSIX.1-2001 Standard, check man page*/
@@ -280,13 +280,6 @@ int execute_cmd(char ** argv, const int argv_no){
 
 	}
 
-	if (strcmp(argv[0], "exit") == 0 ){
-		/* exit parent process*/
-		if (argv_no > 2) {perror("man exit\n");}
-		printf("bye\n");
-		exit(0); /* terminate the whole process*/
-
-	}
 
 	/************************/
 

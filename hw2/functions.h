@@ -15,7 +15,7 @@ int searchSinglePath(const char * p, const char * s);
 
 char * searchPath(const char * PATH, const char * cmd);
 
-int execute_cmd(char ** argv, const int argv_no);
+int execute_cmd(char ** argv, int argv_no);
 
 int parsePipe(int argv_no, char ** argv, char ** new_arg, int * new_arg_len);
 
