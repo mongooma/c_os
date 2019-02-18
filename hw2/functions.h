@@ -11,10 +11,14 @@ int * trimEndSpace(char * buffer);
 
 argv_data getCmd(const char * buffer, argv_data d);
 
-char * searchPath(const char * PATH, const char * cmd);
-
 int searchSinglePath(const char * p, const char * s);
 
-int execute_cmd(char ** argv, const int argv_no, const char * cwd);
+char * searchPath(const char * PATH, const char * cmd);
 
+int execute_cmd(char ** argv, const int argv_no);
 
+int parsePipe(int argv_no, char ** argv, char ** new_arg, int * new_arg_len);
+
+int exec_pipe_2(char ** argv, int argv_no, char ** new_arg, int new_arg_len, pid_t * pid_1, pid_t * pid_2);
+
+int exec_(char ** argv, int argv_no, pid_t * pid);

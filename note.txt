@@ -3,12 +3,15 @@ memory leak:
 valgrind ./hw1_cache 12 test.txt
 
 using gcc: 
-gcc -Wall -Werror hw1_cache.c -o hw1_cache
--D DEBUG (use printf)
+gcc -Wall -Werror hw1_cache.c <other func files> -o hw1_cache
+-D DEBUG (use printf) 
+
+#ifdef DEBUG
+<code block>
+#endif
 
 gcc -g ./hw1_cache.c
 -g debug mode used by gdb
-
 
 using gdb for debugging:
 
@@ -16,6 +19,17 @@ gdb <executable>
 break <number>
 run <args>
 print <variable>
+
+to see where the error occurs:
+bt  - see backtrace to locate (most efficient)
+info line
+where
+---
+MORE ON DEBUGGING:
+
+check .../glibc for all the c source files of a implementation of a func
+
+
 ... 
 
 

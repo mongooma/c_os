@@ -19,6 +19,7 @@ Use C to implement a rudimentary interactive shell similar to that of bash.
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
+
 #include "functions.h"
 
 #define MAX_CMD_LEN 1024 // user's input command
@@ -42,14 +43,10 @@ int main(int argc, char ** argv) {
 
 	/* You may also assume that command-line arguments do not contain spaces.
 	*/
-	char *buffer = calloc(MAX_CMD_LEN + 1, sizeof(char));
+	char * buffer = calloc(MAX_CMD_LEN + 1, sizeof(char));
 	argv_data argv_tuple;
 	argv_tuple.argv_user = calloc(1, sizeof(char *)); /*temporarily assign 1 block for argv array*/
 	argv_tuple.argv_no = calloc(1, sizeof(int));
-
-	char * cwd = calloc(MAX_PATH_LEN, sizeof(char));
-
-	strcpy(cwd, getcwd(NULL, 0)); /* RESTORE cwd when needed */
 
 	while (1) {
 		/* create an inﬁnite loop that repeatedly prompts a user to enter a command, parses the given command, locates the command executable, then executes the command (if found).
@@ -69,12 +66,12 @@ int main(int argc, char ** argv) {
 		argv_tuple = getCmd(buffer, argv_tuple);  /* argv_user is changed after this*/
 		/* must set a return value otherwise argv_tuple will be modified by returning; weird*/
 
-	#ifdef DEBUG_pass
-	for(int i = 0; i < argv_tuple.argv_no[0]; i ++){
-		//printf("%s len: %d\n", argv_user[i], (int) strlen(argv_user[i]));
-		printf("%s len: %d\n", argv_tuple.argv_user[0], (int) strlen(argv_tuple.argv_user[0]));
-	}
-	#endif
+		#ifdef DEBUG_pass
+		for(int i = 0; i < argv_tuple.argv_no[0]; i ++){
+			//printf("%s len: %d\n", argv_user[i], (int) strlen(argv_user[i]));
+			printf("%s len: %d\n", argv_tuple.argv_user[0], (int) strlen(argv_tuple.argv_user[0]));
+		}
+		#endif
 
 		/* 4. To execute the given command, a child process is created via fork()*/
 
@@ -90,9 +87,16 @@ int main(int argc, char ** argv) {
 		}
 
 		/* 4.2 execute the commands */
-		execute_cmd(argv_tuple.argv_user, argv_tuple.argv_no[0], cwd);
+		#ifdef DEBUG
+		printf("main: we are at %s \n", getcwd(NULL, 0)); /* todo, TRY POSIX.1-2001 Standard, check man page*/
+		#endif
+		execute_cmd(argv_tuple.argv_user, argv_tuple.argv_no[0]);
 		
 	}
+
+	free(buffer);
+	free(argv_tuple.argv_user); 
+	free(argv_tuple.argv_no); 
 
 	return EXIT_SUCCESS; /* EXIT_SUCCESS AND EXIT_FAILURE are for main() only*/
 }

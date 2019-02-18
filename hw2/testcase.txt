@@ -1,3 +1,5 @@
+export MYPATH=/usr/local/bin#/usr/bin#/bin#.
+
 # some test cases for hw2
 # need to create pipes
 
@@ -11,10 +13,6 @@ ps | grep
 
 cat <filename>
 
---
-
-passed:
-
 exit
 
 cd <dirname>
@@ -25,31 +23,43 @@ cat <filename>
 
 ps | less
 
+cat | more
+
+
+--
+
+passed:
+
+exit
+
+ps -ef
+
+cd
+
+
+
+
+
+
+
+
+cat some_file | wc -l (in test.c) // need to have close(p[0]), close(p[1]) in parent as well
+ps -ef | grep root (in test.c)  
 
 debugging:
 
-ps -ef | grep root 
+
 
 
 ----
 
 current issues:
 
+1. pipe second cmd won't exit (check waitpid) ----> put close() in parent process
+2. exit sometimes will execute twice to exit (check waitpid)
 
-1. can only allocate 3 blocks of argv_user:
-	(notice that within getCmd(), argv get allocated fine)
 
-	passed:
-	cat testcase.txt |  
 
-	failed:
-	cat testcase.txt | more --> cat be 0x0, | cannot access memory
-	wc -l testcase.txt |  ---> wc be 0x0, | cannot access memory
-
-	this issue is related to function pass by pointer
-		try to find a way to check the memory maintained by the function and eny changes after it's returned
-
-		
 
 
 
