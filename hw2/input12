@@ -1,0 +1,5 @@
+cat -n input12
+ls -l /usr/bin/python3 &
+sleep 1
+ps -f | wc -l
+exit

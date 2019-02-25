@@ -1,0 +1,25 @@
+test 10:
+
+=expected:
+cat -n hw2-input10.txt
+cd /home/goldsd
+ls -1 | wc -l
+exit
+/home/goldsd$
+6
+/home/goldsd$ 
+
+bye
+
+=local:
+cat -n hw2-input10.txt
+cd /home/goldsd
+ls -1 | wc -l
+exit
+
+6
+/home/goldsd$
+/home/goldsd$
+bye
+
+

@@ -1,0 +1,26 @@
+cat -n hw2-input12.txt
+ls -l /usr/bin/python3 &
+sleep 1
+ps -f | wc -l
+exit
+ 
+ 
+[running background process "ls"]
+lrwxrwxrwx 1 root root 9 Oct 25 07:11 /usr/bin/python3 -> python3.6
+4
+bye
+
+
+---
+
+cat -n hw2-input12.txt
+ls -l /usr/bin/python3 &
+sleep 1
+ps -f | wc -l
+exit
+lrwxrwxrwx 1 root root 9 Oct 25 07:11 /usr/bin/python3 -> python3.6
+5
+[running background process "ls"]
+ 
+ 
+bye

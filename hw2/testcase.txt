@@ -1,6 +1,20 @@
+Check to make sure that given an empty command, you don't error. Also maybe check that if given a pipe where one side is empty, you dont error
+
+---
+
+
+
+bash
+
 cd /mnt/c/Users/Mark/Documents/courses/os/code_project/hw2
 
+gcc -Wall ./main.c ./functions.c
+gcc -Wall -D DEBUG ./main.c ./functions.c
+
+env MYPATH=/usr/local/bin#/usr/bin#/bin ./a.out
+
 export MYPATH=/usr/local/bin#/usr/bin#/bin#.
+env MYPATH=/usr/local/bin#/usr/bin#/bin#. ./a.out < input.txt
 
 # some test cases for hw2
 # need to create pipes

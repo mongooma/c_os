@@ -1,0 +1,30 @@
+cat input.txt
+wc input.txt
+
+cat -n hw2-input10.txt
+cd /home/goldsd
+ls -1 | wc -l
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+exit
+
+

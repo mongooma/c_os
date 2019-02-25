@@ -1,0 +1,6 @@
+cd /
+pwd
+cd home/mark
+pwd
+ls -o -h -Q
+exit

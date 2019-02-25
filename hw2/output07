@@ -1,0 +1,37 @@
+/mnt/c/Users/Mark/Documents/courses/os/code_project/hw2$ /$ 
+/
+/$ 
+/home/mark$ 
+/home/mark
+/home/mark$ 
+total 0
+drwxrwxrwx 1 mark 512 Jan  4 11:46 "anaconda3"
+-rw-r--r-- 1 root   2 Feb 13 14:24 "ptrace_scope~"
+-rw-r--r-- 1 root   2 Feb 13 14:24 "ptrace_scopz~"
+/home/mark$ 
+bye
+
+---
+
+
+expected
+
+/$
+/
+/$
+/home/goldsd$
+/home/goldsd
+/home/goldsd$
+total 12K
+-rw-rw---- 1 goldsd    0 Feb 23 16:30 "a"
+-rw-rw---- 1 goldsd    0 Feb 23 16:30 "b"
+-rw-rw---- 1 goldsd    0 Feb 23 16:30 "cocoapuffs"
+-rw-rw-r-- 1 goldsd   40 Feb 23 19:24 "meme"
+lrwxrwxrwx 1 goldsd   69 Jan 20 21:25 "os" -> "/var/local/submitty/private_course_repositories/operating_systems/s19"
+drwxrwxr-x 2 goldsd 4.0K Jan 23 23:20 "tmp"
+ 
+ 
+/home/goldsd$
+ 
+ 
+bye

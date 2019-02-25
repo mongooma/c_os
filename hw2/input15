@@ -1,0 +1,6 @@
+cat input15 input15
+cd /home
+cd /
+ls -1
+ls -1 | cat meme
+exit

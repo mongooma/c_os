@@ -128,11 +128,12 @@ int searchSinglePath(const char * p, const char * s) {
 	DIR * dir = opendir(p);   /* open the directory specified by p*/
 	if (dir == NULL)
 	{
-		perror("opendir() failed");
-		return -1;
+		printf("ERROR: opendir() failed");
+		//kill(getpid(), SIGINT);
+		exit(42);
 	}
 	/* DIR is a directory stream for reading the directory */
-	#ifdef DEBUG
+	#ifdef DEBUG_mute
 		int erronum;
 	#endif
 	/* */
@@ -151,13 +152,13 @@ int searchSinglePath(const char * p, const char * s) {
 		{
 			printf("%s,\n", file->d_name);
 			//fprintf(stderr, "Value of errno: %d\n", errno);
-      		perror("Error printed by perror");
+      		perror("ERROR: ");
 			continue; /* ignore some broken file*/
 		}
 
 		if (strcmp(file->d_name, s) == 0) 
 		{
-			if (S_IXUSR & buf.st_mode == 0) { /* S_IXUSR: macro mask value; 
+			if (S_IXUSR & (buf.st_mode == 0)) { /* S_IXUSR: macro mask value; 
 											if the owner has exec permission										*/
 				printf("No exec permission \n");
 				chdir(cwd);
@@ -184,7 +185,7 @@ char * searchPath(const char * PATH, const char * cmd) {
 
 	/* search in $MYPATH to find the executable FILE*/
 
-	#ifdef DEBUG
+	#ifdef DEBUG_mute
 		FILE * f = fopen("./log.txt", "w");
 		fprintf(f, "PATH: %s \n", PATH);
 	#endif //debug
@@ -194,16 +195,26 @@ char * searchPath(const char * PATH, const char * cmd) {
 	int j = 0;
 	int FOUND = -1;
 
-	while (PATH[i] != '\0') {
-		/*todo: assume the maximum length for $MYPATH is 1024*/
-		p[j] = PATH[i];
+	char * PATH_endAdd = calloc(strlen(PATH) + 2, sizeof(char)); 
+	/* PATH + '#'' + '.' + '#' + '\0' */
+	PATH_endAdd = strcpy(PATH_endAdd, PATH);
+	PATH_endAdd[strlen(PATH)] = (char) '#';
+	PATH_endAdd[strlen(PATH) + 1] = (char)'.';
+	PATH_endAdd[strlen(PATH) + 2] = (char)'#';
+	PATH_endAdd[strlen(PATH) + 3] = '\0';
 
-		if ((PATH[i] == ':') || (PATH[i] == '#')) {  /* if a complete path is stored*/
+
+	while (PATH_endAdd[i] != '\0') {
+		/*todo: assume the maximum length for $MYPATH is 1024*/
+		p[j] = PATH_endAdd[i];
+
+		if ((PATH_endAdd[i] == ':') || (PATH_endAdd[i] == '#')) {  /* if a complete path is stored*/
 			/* in hw2 pdf the separator is '#'*/
 			/* TODO: using PATH[i] == '#' || ':' won't give the right result*/
 
 			p[j] = '\0';
 	#ifdef DEBUG
+			FILE * f = fopen("./log.txt", "w");
 			fprintf(f, "%s\n", p);
 	#endif //debug
 			
@@ -239,7 +250,7 @@ char * searchPath(const char * PATH, const char * cmd) {
 		printf("debug:cmd not found \n");
 		fflush(stdout);
 	#endif
-	return "nan";
+	return NULL;
 }
 
 
@@ -252,7 +263,7 @@ int execute_cmd(char ** argv, int argv_no){
 	/* master pipeline fro */
 	/* to debug */
 
-	/* At parent process */
+	/* ******************At parent process *****************/
 
 	/* 4.2.1 special case cd, exit (taking care of at "main")*/
 	#ifdef DEBUG
@@ -273,10 +284,9 @@ int execute_cmd(char ** argv, int argv_no){
 		int r = chdir(argv[1]);
 		
 		if(r == -1){
-			perror("Error returned by perror: ");
+			perror("ERROR: ");
+			return 0;
 		}
-
-		return 0;
 
 	}
 
@@ -287,10 +297,10 @@ int execute_cmd(char ** argv, int argv_no){
 
 	char ** new_arg = calloc(argv_no, sizeof(char *));
 	int new_arg_len = -1;
+	int rc;
 
 	int p = parsePipe(argv_no, argv, new_arg, &new_arg_len);
-
-	if( p == -1 ){perror(" pipe abnormal ! \n"); exit(-1);} /* pipe cmd abnormal */
+	if(p == -1) return -1; 
 
 	#ifdef DEBUG
 		printf("with pipe: %d \n", p);
@@ -301,9 +311,8 @@ int execute_cmd(char ** argv, int argv_no){
 		#ifdef DEBUG
 		printf("execute_cmd: before pipe exec, we are at %s \n", getcwd(NULL, 0)); /* todo, TRY POSIX.1-2001 Standard, check man page*/
 		#endif
-		exec_pipe_2(argv, argv_no, new_arg, new_arg_len, &pid_1, &pid_2); // special pipe case for hw2 
+		rc = exec_pipe_2(argv, argv_no, new_arg, new_arg_len, &pid_1, &pid_2); // special pipe case for hw2 
 		/* will return in parent process*/
-
 		#ifdef DEBUG
 		printf("pid_1: %d, pid_2: %d, here \n", pid_1, pid_2);
 		#endif
@@ -313,7 +322,7 @@ int execute_cmd(char ** argv, int argv_no){
 		#ifdef DEBUG
 		printf("execute_cmd: before exec, we are at %s \n", getcwd(NULL, 0)); /* todo, TRY POSIX.1-2001 Standard, check man page*/
 		#endif
-		exec_(argv, argv_no, &pid);
+		rc = exec_(argv, argv_no, &pid);
 		/* will return in parent process*/;
 
 		#ifdef DEBUG
@@ -322,9 +331,8 @@ int execute_cmd(char ** argv, int argv_no){
 
 	}
 
-	free(argv);
 	free(new_arg);
-	return 0;
+	return rc;
 
 }
 
@@ -349,7 +357,7 @@ int parsePipe(int argv_no, char ** argv, char ** new_arg, int * new_arg_len){
 		if (rc == 0 ){ /* detect '|'*/
 			p = 1;
 			argv[i] = NULL;  /* NULL could stop execv from parsing the rest cmd*/
-			if (i == argv_no - 1){perror("Nothing after pipe: \n"); return -1;}
+			if (i == argv_no - 1){printf("ERROR: pipe empty second argv \n"); return -1;}
 			i++;
 
 		}
@@ -412,12 +420,20 @@ int exec_pipe_2(char ** argv, int argv_no, char ** new_arg, int new_arg_len, pid
 		dup2(p[1], 1); /* stdout is using the address of fd p[1]*/
 		close(p[1]); /* after the writing has finished, close write */
 
-		strcpy(FILE, searchPath(getenv("MYPATH"), argv[0]));/* search $MYPATH */;
-
-		if ( strcmp(FILE, "nan") == 0/* search directory; command not found*/) { perror("Command not found. \n");}
+		char * cmd = searchPath(getenv("MYPATH"), argv[0]);
+		if(cmd != NULL){
+			strcpy(FILE, cmd);/* search $MYPATH */;
+		}else{
+			printf("ERROR: command \"%s\" not found \n", argv[0]);
+			//kill(getpid(), SIGINT); // commit suicide
+			exit(42);
+			
+		}
 
 		execv(FILE, argv);  /* new image */
-		perror("pipe write error:\n"); /* if exec fail will come to this*/
+		printf("ERROR: pipe write error:\n"); /* if exec fail will come to this*/
+		//kill(getpid(), SIGINT); // commit suicide
+		exit(42);
 
 	}
 
@@ -433,9 +449,16 @@ int exec_pipe_2(char ** argv, int argv_no, char ** new_arg, int new_arg_len, pid
 			printf("pipe: read (not an error): \n");
 			fflush(stdout);
 		#endif
-		strcpy(FILE, searchPath(getenv("MYPATH"), new_arg[0]));/* search $MYPATH */;
 
-		if ( strcmp(FILE, "nan") == 0/* search directory; command not found*/) { perror("Command not found. \n");}
+		char * cmd = searchPath(getenv("MYPATH"), new_arg[0]);
+		if(cmd != NULL){
+			strcpy(FILE, cmd);/* search $MYPATH */;
+		}else{
+			printf("ERROR: command \"%s\" not found ", new_arg[0]);
+			//kill(getpid(), SIGINT); // commit suicide
+			exit(42);
+			
+		}
 
 		new_arg = realloc(new_arg, (new_arg_len + 1) * sizeof(char *));
 		new_arg[new_arg_len] = NULL;
@@ -443,7 +466,9 @@ int exec_pipe_2(char ** argv, int argv_no, char ** new_arg, int new_arg_len, pid
 			new_arg[new_arg_len-1] = NULL;
 		}
 		execv(FILE, new_arg); /* new image */
-		perror("pipe read error:\n"); /* if exec fail will come to this */
+		perror("ERROR: pipe read error:\n"); /* if exec fail will come to this */
+		//kill(getpid(), SIGINT);
+		exit(42);
 
 	} 
 
@@ -486,6 +511,10 @@ int exec_pipe_2(char ** argv, int argv_no, char ** new_arg, int new_arg_len, pid
 			printf("waitpid() failed for child process %d, %d \n", child_pid_1, child_pid_2);
 		}
 
+		if(WEXITSTATUS(status1) == 42 || WEXITSTATUS(status2) == 42){
+			return -1; 
+		}
+
 	}else{ /* background processing */
 
 		printf("[running background process \"%s\"]\n", new_arg[0]); /* todo: print second cmd name */
@@ -495,8 +524,6 @@ int exec_pipe_2(char ** argv, int argv_no, char ** new_arg, int new_arg_len, pid
 
 
 	free(FILE);
-	free(argv);
-	free(new_arg);
 	return 0;
 }
 
@@ -517,15 +544,25 @@ int exec_(char ** argv, int argv_no, pid_t * pid){
 	char * FILE = calloc(MAX_FILEPATH_LEN, sizeof(char)); 
 	*pid = fork();
 	if ( *pid == -1 ) { /* child process creation failed*/ 
-		perror("fork() failed \n"); 
-		return EXIT_FAILURE;
+		printf("fork() failed \n"); 
+		//kill(getpid(), SIGINT);
+		exit(42);
 	}
 
 	if(*pid == 0){
 
-		strcpy(FILE, searchPath(getenv("MYPATH"), argv[0]));/* search $MYPATH */;
+		char * cmd = searchPath(getenv("MYPATH"), argv[0]);
+		if(cmd != NULL){
 
-		if ( strcmp(FILE, "nan") == 0/* search directory; command not found*/) { perror("Command not found. \n");}
+			strcpy(FILE, cmd);/* search $MYPATH */;
+
+		}else{
+
+			printf("ERROR: command \"%s\" not found ", argv[0]);
+			//kill(getpid(), SIGINT); // commit suicide
+			exit(42);
+			
+		}
 
 		argv = realloc(argv, (argv_no + 1) * sizeof(char *));
 		argv[argv_no] = NULL;
@@ -567,6 +604,11 @@ int exec_(char ** argv, int argv_no, pid_t * pid){
 		if (child_pid == -1) {
 			printf("waitpid() failed for child process %d \n", *pid);
 		}
+
+		if(WEXITSTATUS(status) == 42){
+			return -1; 
+		}
+
 	}else{
 
 		printf("[running background process \"%s\"]\n", argv[0]); /* todo: print second cmd name */
@@ -575,7 +617,6 @@ int exec_(char ** argv, int argv_no, pid_t * pid){
 	}
 
 	free(FILE);
-	free(argv);
 	return 0;
 
 }

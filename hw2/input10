@@ -1,0 +1,4 @@
+cat -n input10
+cd .
+ls -1 | wc -l
+exit

@@ -19,7 +19,6 @@ Use C to implement a rudimentary interactive shell similar to that of bash.
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
-
 #include "functions.h"
 
 #define MAX_CMD_LEN 1024 // user's input command
@@ -28,6 +27,9 @@ Use C to implement a rudimentary interactive shell similar to that of bash.
 #define MAX_FILEPATH_LEN 1024 // a file path
 
 int main(int argc, char ** argv) {
+
+	setvbuf( stdout, NULL, _IONBF, 0 );
+
 	/* before you run, set the $MYPATH in the bash shell 
 		MYPATH=/usr/local/bin#/usr/bin#/bin#.
 
@@ -90,12 +92,15 @@ int main(int argc, char ** argv) {
 		/* 4.1 check in $MYPATH directories for executable for user cmd*/
 
 		if(getenv("MYPATH") == NULL){
-			perror("Specify the $MYPATH variable using: \n"
-				"bash$ export MYPATH=/usr/local/bin#/usr/bin#/bin#. \n"
-				"bash$ echo $MYPATH \n"
-				"MYPATH=/usr/local/bin#/usr/bin#/bin#. \n"
-				"bash$ unset MYPATH \n"
-					"");
+			// perror("Specify the $MYPATH variable using: \n"
+			// 	"bash$ export MYPATH=/usr/local/bin#/usr/bin#/bin#. \n"	
+			// 	"bash$ echo $MYPATH \n"
+			// 	"MYPATH=/usr/local/bin#/usr/bin#/bin#. \n"
+			// 	"bash$ unset MYPATH \n"
+			// 		"");
+			/*  int setenv(const char *name, const char *value, int overwrite); */
+			
+			setenv("MYPATH", "/usr/local/bin#/usr/bin#/bin#.", 0);
 		}
 
 		/* 4.2 execute the commands */
@@ -103,8 +108,13 @@ int main(int argc, char ** argv) {
 		printf("main: we are at %s \n", getcwd(NULL, 0)); /* todo, TRY POSIX.1-2001 Standard, check man page*/
 		#endif
 
-		int r = execute_cmd(argv_tuple.argv_user, argv_tuple.argv_no[0]);
-		
+		int rc = execute_cmd(argv_tuple.argv_user, argv_tuple.argv_no[0]);
+		/* argv_tuple.argv_user, .argv_no are not freed within execute_cmd*/
+
+		if(rc == -1){
+			printf("\n");
+			continue; // anything wrong with the last cmd, simply continue
+		}
 	}
 
 	free(buffer);

@@ -1,0 +1,20 @@
+cat -n hw2-input11.txt
+cd /home/goldsd
+ls -1 | wc -l
+ls -1 | wc -l
+ls -1 | wc -l
+ls -l /usr/bin/gcc
+ps -f | wc -l
+exit
+/home/goldsd$
+6
+/home/goldsd$
+6
+/home/goldsd$
+6
+/home/goldsd$
+lrwxrwxrwx 1 root root 5 Sep 17 03:07 /usr/bin/gcc -> gcc-7
+/home/goldsd$
+4
+/home/goldsd$
+bye

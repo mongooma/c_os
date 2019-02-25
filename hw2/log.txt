@@ -1,0 +1,9 @@
+/mnt/c/Users/Mark/Documents/courses/os/code_project/hw2$ ERROR: command "cd" not found 
+/$ /
+/$ ERROR: command "cd" not found 
+/home/mark$ /home/mark
+/home/mark$ total 0
+drwxrwxrwx 1 mark 512 Jan  4 11:46 "anaconda3"
+-rw-r--r-- 1 root   2 Feb 13 14:24 "ptrace_scope~"
+-rw-r--r-- 1 root   2 Feb 13 14:24 "ptrace_scopz~"
+/home/mark$ bye
