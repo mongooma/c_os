@@ -209,7 +209,7 @@ char * searchPath(const char * PATH, const char * cmd) {
 	int j = 0;
 	int FOUND = -1;
 
-	char * PATH_endAdd = calloc(strlen(PATH) + 2, sizeof(char)); 
+	char * PATH_endAdd = calloc(strlen(PATH) + 4, sizeof(char)); 
 	/* PATH + '#'' + '.' + '#' + '\0' */
 	PATH_endAdd = strcpy(PATH_endAdd, PATH);
 	PATH_endAdd[strlen(PATH)] = (char) '#';
@@ -244,6 +244,7 @@ char * searchPath(const char * PATH, const char * cmd) {
 				while(*cmd != '\0') {p[j] = *cmd; cmd ++; j ++;} /* copy cmd to the end of the p path*/
 				p[j] = '\0';
 
+				free(PATH_endAdd);
 				return p;
 
 			}else{ /* start searching another dir in PATH*/
@@ -259,6 +260,7 @@ char * searchPath(const char * PATH, const char * cmd) {
 		i++;
 	}
 	/*if nothing's found*/
+	free(PATH_endAdd);
 	free(p);
 	#ifdef DEBUG
 		printf("debug:cmd not found \n");

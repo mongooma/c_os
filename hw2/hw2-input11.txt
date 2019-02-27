@@ -1,5 +1,5 @@
 cat -n hw2-input11.txt
-cd /home/goldsd
+cd /home/mark
 ls -1 | wc -l
 ls -1 | wc -l
 ls -1 | wc -l
