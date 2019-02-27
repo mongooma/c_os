@@ -29,7 +29,7 @@ int pipe_test(){
 		close(1); // close stdout
 
 		dup2(p[1], 1);
-		close(p[1]); // close write after finish
+		close(p[1]); 
 
 		execlp("/bin/ps", "ps", "-ef", NULL);
 		//execlp("/bin/cat", "cat", "functions.c", NULL);
@@ -43,7 +43,7 @@ int pipe_test(){
 		close(0); // close stdin
 
 		dup2(p[0], 0); // read is using stdin's address
-		close(p[0]); //close after read finished
+		close(p[0]); 
 
 		execlp("/bin/grep", "grep", "root", NULL);
 		//execlp("/usr/bin/wc", "wc", "-l", NULL);

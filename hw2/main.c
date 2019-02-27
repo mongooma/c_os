@@ -68,7 +68,7 @@ int main(int argc, char ** argv) {
 
 		trimStartEndSpace(buffer);
 
-		if(strcmp(buffer, "\n") == 0 ){
+		if(strcmp(buffer, "") == 0 ){
 			continue; /* deal with single \n user input*/
 		}
 
@@ -89,21 +89,7 @@ int main(int argc, char ** argv) {
 
 		/* 4. To execute the given command, a child process is created via fork()*/
 
-		/* 4.1 check in $MYPATH directories for executable for user cmd*/
-
-		if(getenv("MYPATH") == NULL){
-			// perror("Specify the $MYPATH variable using: \n"
-			// 	"bash$ export MYPATH=/usr/local/bin#/usr/bin#/bin#. \n"	
-			// 	"bash$ echo $MYPATH \n"
-			// 	"MYPATH=/usr/local/bin#/usr/bin#/bin#. \n"
-			// 	"bash$ unset MYPATH \n"
-			// 		"");
-			/*  int setenv(const char *name, const char *value, int overwrite); */
-			
-			setenv("MYPATH", "/usr/local/bin#/usr/bin#/bin#.", 0);
-		}
-
-		/* 4.2 execute the commands */
+		/* 4.1 execute the commands */
 		#ifdef DEBUG
 		printf("main: we are at %s \n", getcwd(NULL, 0)); /* todo, TRY POSIX.1-2001 Standard, check man page*/
 		#endif

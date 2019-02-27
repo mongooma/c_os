@@ -1,0 +1,53 @@
+For me, it seemed like all these "5 instead of 4" problems came from the output of foreground processing with IPC enabled. What I used to do to catch both my child processes was to consecutively using waitpid() in my very end parent process implementation. (basically as shown below)
+
+	parent
+          |
+      first fork
+         / \
+        /   \
+1st child    \
+             parent
+               |
+           second fork
+               / \
+              /   \
+      2nd child    \                   
+                   parent:
+                   waitpid(1st child);
+                   waitpid(2nd child);
+
+This implementation of waitpid() calls caused me to have all "5" instead of "4", I still did not see zombie process in between cause both waitpid() calls were functioning correctly.
+
+ 
+
+However, if I tried to bring forward the waitpid() call for my 1st child process as early as possible, my implementation generally changed to this
+
+	parent
+          |
+      first fork
+         / \
+        /   \
+1st child    \
+             parent:
+             waitpid(1st child);
+               |
+           second fork
+               / \
+              /   \
+      2nd child    \
+                   parent:
+                   waitpid(2nd child);
+
+And this implementation indeed helped me solve this "5 instead of 4" problem on submitty. My guess was if I did two waitpid() calls together at the end of my parent process, the first child process could already terminate for a while before the second child terminated, so it became a zombie process during that short period of time and affected the output count as a result.
+
+-----------------
+
+
+ERROR: command "cocoapuffs" not found
+
+-----------------
+
+valgrind
+
+------------------
+
