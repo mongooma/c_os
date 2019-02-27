@@ -73,7 +73,7 @@ int main(int argc, char ** argv) {
 		}
 
 		if(strcmp(buffer, "exit") == 0 ){
-			printf("bye\n");
+			printf("\nbye\n");
 			break; /* deal with single \n user input*/
 		}
 		
@@ -104,6 +104,9 @@ int main(int argc, char ** argv) {
 	}
 
 	free(buffer);
+	for(int i = 0; i < *argv_tuple.argv_no; i ++){
+		free(argv_tuple.argv_user[i]);
+	}
 	free(argv_tuple.argv_user); 
 	free(argv_tuple.argv_no); 
 

@@ -135,7 +135,7 @@ int searchSinglePath(const char * p, const char * s) {
 	#endif //debug
 
 	char * cwd = calloc(MAX_PATH_LEN, sizeof(char));
-	strcpy(cwd, getcwd(NULL, 0));
+	getcwd(cwd, MAX_PATH_LEN);
 
 	chdir(p); // somehow we need to be under this path
 
@@ -176,9 +176,14 @@ int searchSinglePath(const char * p, const char * s) {
 											if the owner has exec permission										*/
 				printf("No exec permission \n");
 				chdir(cwd);
+				free(cwd);
 				return 1;
 			}else{
 				chdir(cwd);
+				free(cwd);
+	#ifdef DEBUG
+	printf("searchSinglePath: we are at %s \n", getcwd(NULL, 0)); /* todo, TRY POSIX.1-2001 Standard, check man page*/
+	#endif
 				return 0;
 			}
 		}
@@ -188,6 +193,7 @@ int searchSinglePath(const char * p, const char * s) {
 
 	closedir(dir);
 	chdir(cwd);
+	free(cwd);
 
 	return -1;
 }
@@ -233,6 +239,10 @@ char * searchPath(const char * PATH, const char * cmd) {
 	#endif //debug
 			
 			FOUND = searchSinglePath(p, cmd);
+	#ifdef DEBUG
+	printf("searchPath: we are at %s \n", getcwd(NULL, 0)); /* todo, TRY POSIX.1-2001 Standard, check man page*/
+	#endif
+
 
 			/*  0 if an executable s is found;
 				1 if an not-executable s is found;
@@ -336,6 +346,10 @@ int execute_cmd(char ** argv, int argv_no){
 		printf("pid_1: %d, pid_2: %d, here \n", pid_1, pid_2);
 		#endif
 
+		for(int i = 0; i < new_arg_len; i ++){
+			free(new_arg[i]);
+		}
+
 	}else{ /*without pipe */
 		pid_t pid;
 		#ifdef DEBUG
@@ -349,6 +363,8 @@ int execute_cmd(char ** argv, int argv_no){
 		#endif
 
 	}
+
+	/* both background/foreground will come here */
 
 	free(new_arg);
 	return rc;
@@ -519,6 +535,14 @@ int exec_(char ** argv, int argv_no, pid_t * pid, int * p, int pipe_pos){
 		#ifdef DEBUG
 		printf("exec_: we are at %s \n", getcwd(NULL, 0)); /* todo, TRY POSIX.1-2001 Standard, check man page*/
 		#endif
+		/* make a copy of argv and free argv (mem check issue)*/
+		//char ** argv_cpy = calloc(MAX_CMD_LEN, sizeof(char *));
+		//for(int i = 0; i < argv_no+1; i ++){
+		//	argv_cpy[i] = argv[i];
+		//} 
+		
+		//free(argv);
+
 		execv(FILE, argv);
 
 	}
@@ -547,12 +571,12 @@ int exec_(char ** argv, int argv_no, pid_t * pid, int * p, int pipe_pos){
 
 			child_pid = waitpid(0, &status, WNOHANG);  /* 0: Child process having the same group ID (?) */
 
-			if(child_pid != 0){
+			if((child_pid != 0) && (child_pid != -1)){
 				if(child_pid == *pid){
 					break;
 				}else{ /* some background process has terminated */
-					printf("[Process %d terminated with status %d.]", child_pid, status);
-					kill(child_pid, SIGKILL); /* have to manually kill it, check actual bash behavior */
+					printf("[Process %d terminated with status %d.]\n", child_pid, status);
+					//kill(child_pid, SIGKILL); /* have to manually kill it, check actual bash behavior */
 				}
 			}
 			sleep(1);

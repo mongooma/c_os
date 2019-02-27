@@ -1,3 +1,7 @@
+learn to use Frama-C for generating dependency graphs
+
+
+===
 Check to make sure that given an empty command, you don't error. Also maybe check that if given a pipe where one side is empty, you dont error
 
 ---

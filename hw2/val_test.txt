@@ -1,0 +1,2 @@
+cat -n hw2-input11.txt | grep
+exit
