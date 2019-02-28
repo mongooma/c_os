@@ -55,6 +55,22 @@ int main(int argc, char ** argv) {
 		/* create an inﬁnite loop that repeatedly prompts a user to enter a command, parses the given command, locates the command executable, then executes the command (if found).
 		*/
 
+		/* before display the prompt, check for background processes */
+
+		int status;
+		pid_t child_pid;
+		/***********/
+		while(1){
+			child_pid = waitpid(-1, &status, WNOHANG | WUNTRACED); // don't block it
+			if(child_pid > 0){
+			 	printf("[process %d terminated with exit status %d]\n", child_pid, status);
+			}
+			if(child_pid <= 0) break; /* break if all the termination msgs have been flushed out*/
+		}
+		/***********/
+		/* Unknown issue: On submitty, adding this wait here will cause `child exit with status = 1` 
+		 Try to insert it after last cmd executed*/
+
 		/* 1. Output the current working directory 
 			/User/Mark$ 
 		*/
@@ -71,14 +87,32 @@ int main(int argc, char ** argv) {
 
 		if(strcmp(buffer, "") == 0 ){
 			free(argv_tuple.argv_user); 
-			free(argv_tuple.argv_no); 
+			free(argv_tuple.argv_no);
+			/***********/
+			while(1){
+				child_pid = waitpid(-1, &status, WNOHANG | WUNTRACED); // don't block it
+				if(child_pid > 0){
+				 	printf("[process %d terminated with exit status %d]\n", child_pid, status);
+				}
+				if(child_pid <= 0) break; /* break if all the termination msgs have been flushed out*/
+			} 
+			/***********/
 			continue; /* deal with single \n user input*/
 		}
 
 		if(strcmp(buffer, "exit") == 0 ){
 			printf("bye\n");
 			free(argv_tuple.argv_user); 
-			free(argv_tuple.argv_no); 
+			free(argv_tuple.argv_no);
+			/***********/
+			while(1){
+				child_pid = waitpid(-1, &status, WNOHANG | WUNTRACED); // don't block it
+				if(child_pid > 0){
+				 	printf("[process %d terminated with exit status %d]\n", child_pid, status);
+				}
+				if(child_pid <= 0) break; /* break if all the termination msgs have been flushed out*/
+			}  
+			/***********/
 			break; /* deal with single \n user input*/
 		}
 		

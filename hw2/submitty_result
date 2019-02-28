@@ -17,22 +17,96 @@ any cmd error should not abort the program
 60/100
 
 test07: 
-test08: extra \n before 'bye'
+test08:
 test10: 
 test11: 
 test12:  ? -1 pts
-test13: extra \n before first line
+test13: 
 test14: 
 test15: 
 test16: 
-test17: 
-test18: 
-test19: 
-test20: 
-test21: 
+---
+hidden tests: (mostly on background processes)
+test17:  -1
+test18:  -8
+test19:  
+test20:  -2
+test21:  -4
 
 others:
 Note that the & symbol can only be included at the end of the command line; otherwise, this is auser error.(v1.3)
+
+---
+
+When you exit your shell, do not attempt to do anything with the background processes still running -- they will be inherited by process ID 1, continue to run, then when they terminate will be detected by process ID 1 (such that there are no zombies).
+
+
+When we get a pipe with one side empty should we crash?
+
+What about when fork fails?
+[David Goldschmidt]
+David Goldschmidt
+1 day ago
+
+Display an error message to stderr, as described in the homework specifications.  There should not be any test cases that test these sort of errors (lucky for you hahaha)!
+
+ 
+
+G
+
+
+
+hidden test hints:
+
+test 17
+
+Hi, make sure that you let background processes continue running even if your shell program exits.  Also be sure that you are truly running processes in the background -- i.e., do not block on waitpid() after you call fork() and use waitpid() with WNOHANG before you display the prompt in the main loop.
+
+test 18
+
+ Hi, in general, the hidden test cases focus on background processes -- and it sounds like your program is crashing for some reason, possibly due to a memory issue.
+
+ 
+
+G
+
+---
+
+pid = waitpid(-1, &status, WNOHANG | WUNTRACED);
+if(pid > 0){
+	if(WIFEXITED(status)){
+		printf("[process %d terminated with exit status %d]\n", pid, WEXITSTATUS(status));
+	}
+}
+
+
+I'm sort of confused where to put this code.
+
+[Diyuan Zhu]
+Diyuan Zhu
+1 day ago
+
+For background processing, you would want to put this waitpid() call at the beginning part of your outermost infinite loop structure, before you do new command executions.
+
+[David Goldschmidt]
+David Goldschmidt
+1 day ago
+
+Right, check for background processes immediately before you display the prompt to the user.
+G
+
+[Lucas Standaert]
+Lucas Standaert
+1 day ago
+
+I got it working, full points now. Thanks for the help!
+
+
+
+
+
+
+
 
 
 

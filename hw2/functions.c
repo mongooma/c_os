@@ -422,6 +422,11 @@ int parsePipe(int argv_no, char ** argv, char ** new_argv_0, int * new_argv_len_
 				new_argv_0[k] = calloc(MAX_ARGV_LEN, sizeof(char));
 				strcpy(new_argv_0[k], argv[k]);
 			}
+			if(strcmp(argv[argv_no-1], "&") == 0){ /* add '&' to the first argv*/
+				* new_argv_len_0 += 1;
+				new_argv_0[*new_argv_len_0-1] = calloc(2, sizeof(char));
+				strcpy(new_argv_0[*new_argv_len_0-1], "&");
+			}
 
 			/***/
 
@@ -611,24 +616,35 @@ int exec_(char ** argv, int argv_no, pid_t * pid, int * p, int pipe_pos){
 		while (1) {
 
 			child_pid = waitpid(0, &status, WNOHANG);  /* 0: Child process having the same group ID (?) */
-
-			if((child_pid != 0) && (child_pid != -1)){
-				if(child_pid == *pid){
+			if(child_pid > 0) {
+				if(child_pid == *pid){ 
 					break;
-				}else{ /* some background process has terminated */
-					printf("[Process %d terminated with status %d.]\n", child_pid, status);
-					//kill(child_pid, SIGKILL); /* have to manually kill it, check actual bash behavior */
+				}
+				else{ /* flush any msg for terminated background process (one time) */
+				 	printf("[process %d terminated with exit status %d]\n", child_pid, status);
 				}
 			}
 			sleep(1);
 		}
 
-		if (child_pid == -1) {
-			printf("waitpid() failed for child process %d \n", *pid);
+		/* submitty fix (usually this should be added to the top of the outermost loop)*/
+		/* flush all the msgs for (remaining) terminated background processes*/
+		/***********/
+		while(1){
+			child_pid = waitpid(-1, &status, WNOHANG | WUNTRACED); // don't block it
+			if(child_pid > 0){
+			 	printf("[process %d terminated with exit status %d]\n", child_pid, status);
+			}
+			if(child_pid <= 0) break; /* break if all the termination msgs have been flushed out*/
 		}
+		/***********/
+
+		//if (child_pid == -1) {
+		//	printf("waitpid() failed for child process %d \n", *pid);
+		//}
 
 		#ifdef DEBUG
-		printf("[Process %d terminated with status %d.]\n", child_pid, status);
+		printf("[process %d terminated with exit status %d]\n", child_pid, status);
 		#endif 
 
 		if(WEXITSTATUS(status) == 42){
@@ -642,10 +658,10 @@ int exec_(char ** argv, int argv_no, pid_t * pid, int * p, int pipe_pos){
 	}else{
 
 		printf("[running background process \"%s\"]\n", argv[0]); /* todo: print second cmd name */
-		char * cwd = calloc(MAX_PATH_LEN, sizeof(char));
-		cwd = getcwd(cwd, MAX_PATH_LEN);
-		printf("%s$ ", cwd); /* todo, TRY POSIX.1-2001 Standard, check man page*/
-		free(cwd);
+		//char * cwd = calloc(MAX_PATH_LEN, sizeof(char));
+		//cwd = getcwd(cwd, MAX_PATH_LEN);
+		//printf("%s$ ", cwd); /* todo, TRY POSIX.1-2001 Standard, check man page*/
+		//free(cwd);
 	}
 
 	if(p != NULL){
