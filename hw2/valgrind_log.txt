@@ -1,31 +1,39 @@
-==4107== Memcheck, a memory error detector
-==4107== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
-==4107== Using Valgrind-3.13.0 and LibVEX; rerun with -h for copyright info
-==4107== Command: ./a.out
-==4107== 
-==4107== error calling PR_SET_PTRACER, vgdb might block
-/mnt/c/Users/Mark/Documents/courses/os/code_project/hw2$ ==4108== error calling PR_SET_PTRACER, vgdb might block
-==4109== error calling PR_SET_PTRACER, vgdb might block
-Usage: grep [OPTION]... PATTERN [FILE]...
-Try 'grep --help' for more information.
-/mnt/c/Users/Mark/Documents/courses/os/code_project/hw2$ 
+==4493== Memcheck, a memory error detector
+==4493== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
+==4493== Using Valgrind-3.13.0 and LibVEX; rerun with -h for copyright info
+==4493== Command: ./a.out
+==4493== 
+==4493== error calling PR_SET_PTRACER, vgdb might block
+/mnt/c/Users/Mark/Documents/courses/os/code_project/hw2$ ==4494== error calling PR_SET_PTRACER, vgdb might block
+     1	cat -n hw2-input11.txt
+     2	cd /home/mark
+     3	ls -1 | wc -l
+     4	ls -1 | wc -l
+     5	ls -1 | wc -l
+     6	ls -l /usr/bin/gcc
+     7	ps -f | wc -l
+     8	exit/mnt/c/Users/Mark/Documents/courses/os/code_project/hw2$ /home/mark$ ==4495== error calling PR_SET_PTRACER, vgdb might block
+==4496== error calling PR_SET_PTRACER, vgdb might block
+3
+/home/mark$ ==4497== error calling PR_SET_PTRACER, vgdb might block
+==4498== error calling PR_SET_PTRACER, vgdb might block
+3
+/home/mark$ ==4499== error calling PR_SET_PTRACER, vgdb might block
+==4500== error calling PR_SET_PTRACER, vgdb might block
+3
+/home/mark$ ==4501== error calling PR_SET_PTRACER, vgdb might block
+lrwxrwxrwx 1 root root 5 Sep 17 03:07 /usr/bin/gcc -> gcc-7
+/home/mark$ ==4502== error calling PR_SET_PTRACER, vgdb might block
+==4503== error calling PR_SET_PTRACER, vgdb might block
+4
+/home/mark$ 
 bye
-==4107== 
-==4107== HEAP SUMMARY:
-==4107==     in use at exit: 2 bytes in 1 blocks
-==4107==   total heap usage: 20 allocs, 19 frees, 5,956 bytes allocated
-==4107== 
-==4107== 2 bytes in 1 blocks are definitely lost in loss record 1 of 1
-==4107==    at 0x4C31B25: calloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
-==4107==    by 0x10936A: getCmd (in /mnt/c/Users/Mark/Documents/courses/os/code_project/hw2/a.out)
-==4107==    by 0x1090F9: main (in /mnt/c/Users/Mark/Documents/courses/os/code_project/hw2/a.out)
-==4107== 
-==4107== LEAK SUMMARY:
-==4107==    definitely lost: 2 bytes in 1 blocks
-==4107==    indirectly lost: 0 bytes in 0 blocks
-==4107==      possibly lost: 0 bytes in 0 blocks
-==4107==    still reachable: 0 bytes in 0 blocks
-==4107==         suppressed: 0 bytes in 0 blocks
-==4107== 
-==4107== For counts of detected and suppressed errors, rerun with: -v
-==4107== ERROR SUMMARY: 1 errors from 1 contexts (suppressed: 0 from 0)
+==4493== 
+==4493== HEAP SUMMARY:
+==4493==     in use at exit: 0 bytes in 0 blocks
+==4493==   total heap usage: 126 allocs, 126 frees, 23,000 bytes allocated
+==4493== 
+==4493== All heap blocks were freed -- no leaks are possible
+==4493== 
+==4493== For counts of detected and suppressed errors, rerun with: -v
+==4493== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)

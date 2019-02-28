@@ -19,8 +19,8 @@ char * searchPath(const char * PATH, const char * cmd);
 
 int execute_cmd(char ** argv, int argv_no);
 
-int parsePipe(int argv_no, char ** argv, char ** new_arg, int * new_arg_len);
+int parsePipe(int argv_no, char ** argv, char ** new_argv_0, int * new_argv_len_0, char ** new_argv, int * new_arg_len);
 
-int exec_pipe_2(char ** argv, int argv_no, char ** new_arg, int new_arg_len, pid_t * pid_1, pid_t * pid_2);
+int exec_pipe_2(char ** new_argv_0, int new_argv_len_0, char ** new_argv, int new_argv_len, pid_t * pid_1, pid_t * pid_2);
 
 int exec_(char ** argv, int argv_no, pid_t * pid, int * p, int pipe_pos);

@@ -323,11 +323,14 @@ int execute_cmd(char ** argv, int argv_no){
 
 	/* handling normal kind of cmds */
 
+	char ** new_arg_0 = calloc(argv_no, sizeof(char *));
+	int new_arg_len_0 = -1;
 	char ** new_arg = calloc(argv_no, sizeof(char *));
 	int new_arg_len = -1;
 	int rc;
 
-	int p = parsePipe(argv_no, argv, new_arg, &new_arg_len);
+	int p = parsePipe(argv_no, argv, new_arg_0, &new_arg_len_0, new_arg, &new_arg_len);
+	/* argv is freed in parsePipe, if no pipe, argv is copied to new_arg_0 */
 
 	if(p == -1) return -1; 
 
@@ -335,43 +338,65 @@ int execute_cmd(char ** argv, int argv_no){
 		printf("with pipe: %d \n", p);
 	#endif
 
+	/* parent process */
 	if(	p == 1 ){ /* with pipe */
 		pid_t pid_1, pid_2;
 		#ifdef DEBUG
 		printf("execute_cmd: before pipe exec, we are at %s \n", getcwd(NULL, 0)); /* todo, TRY POSIX.1-2001 Standard, check man page*/
 		#endif
-		rc = exec_pipe_2(argv, argv_no, new_arg, new_arg_len, &pid_1, &pid_2); // special pipe case for hw2 
+		rc = exec_pipe_2(new_arg_0, new_arg_len_0, new_arg, new_arg_len, &pid_1, &pid_2); // special pipe case for hw2 
 		/* will return in parent process*/
 		#ifdef DEBUG
 		printf("pid_1: %d, pid_2: %d, here \n", pid_1, pid_2);
 		#endif
 
+		for(int i = 0; i < new_arg_len_0; i ++){
+			#ifdef DEBUG_v
+			printf("%s\n", new_arg[i]);
+			#endif
+			free(new_arg_0[i]);
+		}
+		free(new_arg_0);
+
 		for(int i = 0; i < new_arg_len; i ++){
+			#ifdef DEBUG_v
+			printf("%s\n", new_arg[i]);
+			#endif
 			free(new_arg[i]);
 		}
+		free(new_arg);
 
 	}else{ /*without pipe */
 		pid_t pid;
 		#ifdef DEBUG
 		printf("execute_cmd: before exec, we are at %s \n", getcwd(NULL, 0)); /* todo, TRY POSIX.1-2001 Standard, check man page*/
 		#endif
-		rc = exec_(argv, argv_no, &pid, NULL, -1);
+		rc = exec_(new_arg_0, new_arg_len_0, &pid, NULL, -1);
 		/* will return in parent process*/;
 
 		#ifdef DEBUG
 		printf("pid: %d, here \n", pid);
 		#endif
 
+		for(int i = 0; i < new_arg_len_0; i ++){
+			#ifdef DEBUG_v
+			printf("%s\n", new_arg[i]);
+			#endif
+			free(new_arg_0[i]);
+		}
+		free(new_arg_0);
+		free(new_arg);
+
 	}
 
 	/* both background/foreground will come here */
 
-	free(new_arg);
+	
 	return rc;
 
 }
 
-int parsePipe(int argv_no, char ** argv, char ** new_argv, int * new_arg_len){
+int parsePipe(int argv_no, char ** argv, char ** new_argv_0, int * new_argv_len_0, char ** new_argv, int * new_arg_len){
 	/*  params:
 		argv,
 		argv_no,
@@ -391,7 +416,15 @@ int parsePipe(int argv_no, char ** argv, char ** new_argv, int * new_arg_len){
 		int rc = strcmp(argv[i], "|");
 		if (rc == 0 ){ /* detect '|'*/
 			p = 1;
-			argv[i] = NULL;  /* NULL could stop execv from parsing the rest cmd*/
+			/* copy the first argv to a new argv*/
+			* new_argv_len_0 = i;
+			for(int k = 0; k < *new_argv_len_0; k ++){
+				new_argv_0[k] = calloc(MAX_ARGV_LEN, sizeof(char));
+				strcpy(new_argv_0[k], argv[k]);
+			}
+
+			/***/
+
 			if (i == argv_no - 1){fprintf(stderr, "ERROR: pipe empty second argv \n"); return -1;}
 			i++; // hop over the '|'
 
@@ -413,12 +446,20 @@ int parsePipe(int argv_no, char ** argv, char ** new_argv, int * new_arg_len){
 
 	*new_arg_len = j;
 
+	if(* new_arg_len == 0){ /* if no pipe, copy the argv to the new_arg_0 */
+		* new_argv_len_0 = argv_no;
+		for(int k = 0; k < * new_argv_len_0; k ++){
+			new_argv_0[k]= calloc(MAX_ARGV_LEN, sizeof(char));
+			strcpy(new_argv_0[k], argv[k]);
+		}	
+	}
+
 	return p;
 
 }
 
 
-int exec_pipe_2(char ** argv, int argv_no, char ** new_argv, int new_argv_len, pid_t * pid_1, pid_t * pid_2){
+int exec_pipe_2(char ** new_argv_0, int new_argv_len_0, char ** new_argv, int new_argv_len, pid_t * pid_1, pid_t * pid_2){
 	/* to debug */
 
 	/* 	param: pid_1 pid of the first child process; place holder
@@ -452,7 +493,7 @@ int exec_pipe_2(char ** argv, int argv_no, char ** new_argv, int new_argv_len, p
 	int p[2];
 	int rc = pipe(p);
 	if(rc == -1){ printf("pipe failed \n");}
-	exec_(argv, argv_no, pid_1, p, 0);
+	exec_(new_argv_0, new_argv_len_0, pid_1, p, 0);
 
 	exec_(new_argv, new_argv_len, pid_2, p, 1);
 
@@ -586,15 +627,25 @@ int exec_(char ** argv, int argv_no, pid_t * pid, int * p, int pipe_pos){
 			printf("waitpid() failed for child process %d \n", *pid);
 		}
 
+		#ifdef DEBUG
+		printf("[Process %d terminated with status %d.]\n", child_pid, status);
+		#endif 
+
 		if(WEXITSTATUS(status) == 42){
+			#ifdef DEBUG
+			printf("exec_: 42 get! \n");
+			#endif
+			free(FILE);
 			return -1; 
 		}
 
 	}else{
 
 		printf("[running background process \"%s\"]\n", argv[0]); /* todo: print second cmd name */
-		printf("%s$ ", getcwd(NULL, 0)); /* todo, TRY POSIX.1-2001 Standard, check man page*/
-
+		char * cwd = calloc(MAX_PATH_LEN, sizeof(char));
+		cwd = getcwd(cwd, MAX_PATH_LEN);
+		printf("%s$ ", cwd); /* todo, TRY POSIX.1-2001 Standard, check man page*/
+		free(cwd);
 	}
 
 	if(p != NULL){

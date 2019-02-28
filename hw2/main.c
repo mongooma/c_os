@@ -46,20 +46,21 @@ int main(int argc, char ** argv) {
 	/* You may also assume that command-line arguments do not contain spaces.
 	*/
 	char * buffer = calloc(MAX_CMD_LEN + 1, sizeof(char));
-	argv_data argv_tuple;
-	argv_tuple.argv_user = calloc(1, sizeof(char *)); /*temporarily assign 1 block for argv array*/
-	argv_tuple.argv_no = calloc(1, sizeof(int));
 
 	while (1) {
+
+		argv_data argv_tuple;
+		argv_tuple.argv_user = calloc(1, sizeof(char *)); /*temporarily assign 1 block for argv array*/
+		argv_tuple.argv_no = calloc(1, sizeof(int));
 		/* create an inﬁnite loop that repeatedly prompts a user to enter a command, parses the given command, locates the command executable, then executes the command (if found).
 		*/
 
 		/* 1. Output the current working directory 
 			/User/Mark$ 
 		*/
-		char * buf = calloc(MAX_FILEPATH_LEN, sizeof(char)); /* do this to avoid lost memories*/
-		printf("%s$ ", getcwd(buf, MAX_FILEPATH_LEN)); /* todo, TRY POSIX.1-2001 Standard, check man page*/
-		free(buf);
+		char * cwd = calloc(MAX_FILEPATH_LEN, sizeof(char)); /* do this to avoid lost memories*/
+		printf("%s$ ", getcwd(cwd, MAX_FILEPATH_LEN)); /* todo, TRY POSIX.1-2001 Standard, check man page*/
+		free(cwd);
 
 		/* 2. use fgets() to read in a command from the user */
 		fgets(buffer, MAX_CMD_LEN, stdin);
@@ -69,11 +70,15 @@ int main(int argc, char ** argv) {
 		trimStartEndSpace(buffer);
 
 		if(strcmp(buffer, "") == 0 ){
+			free(argv_tuple.argv_user); 
+			free(argv_tuple.argv_no); 
 			continue; /* deal with single \n user input*/
 		}
 
 		if(strcmp(buffer, "exit") == 0 ){
 			printf("\nbye\n");
+			free(argv_tuple.argv_user); 
+			free(argv_tuple.argv_no); 
 			break; /* deal with single \n user input*/
 		}
 		
@@ -99,16 +104,17 @@ int main(int argc, char ** argv) {
 
 		if(rc == -1){
 			printf("\n");
-			continue; // anything wrong with the last cmd, simply continue
+			// anything wrong with the last cmd, simply continue
 		}
+
+		for(int i = 0; i < *argv_tuple.argv_no; i ++){
+		 	free(argv_tuple.argv_user[i]);
+		 }
+		free(argv_tuple.argv_user); 
+		free(argv_tuple.argv_no); 
 	}
 
 	free(buffer);
-	for(int i = 0; i < *argv_tuple.argv_no; i ++){
-		free(argv_tuple.argv_user[i]);
-	}
-	free(argv_tuple.argv_user); 
-	free(argv_tuple.argv_no); 
 
 	return EXIT_SUCCESS; /* EXIT_SUCCESS AND EXIT_FAILURE are for main() only*/
 }
