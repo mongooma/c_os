@@ -76,7 +76,7 @@ int main(int argc, char ** argv) {
 		}
 
 		if(strcmp(buffer, "exit") == 0 ){
-			printf("\nbye\n");
+			printf("bye\n");
 			free(argv_tuple.argv_user); 
 			free(argv_tuple.argv_no); 
 			break; /* deal with single \n user input*/
@@ -103,7 +103,7 @@ int main(int argc, char ** argv) {
 		/* argv_tuple.argv_user, .argv_no are not freed within execute_cmd*/
 
 		if(rc == -1){
-			printf("\n");
+			//printf("\n");
 			// anything wrong with the last cmd, simply continue
 		}
 

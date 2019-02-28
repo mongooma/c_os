@@ -17,19 +17,19 @@ any cmd error should not abort the program
 60/100
 
 test07: 
-test08: command not found formatting, no tracing ' ' (2 pts)
+test08: extra \n before 'bye'
 test10: 
 test11: 
-test12: same output; yet "Child exited with status = 1" -- process termination wasn't printed out ? (2 pts)
-test13: command not found formatting, no tracing ' ' (5 pts)
+test12:  ? -1 pts
+test13: extra \n before first line
 test14: 
 test15: 
-test16: valgrind (15 pts)
-test17: hidden (1 pts)
-test18: Child exited with status = 1 (8 pts)
-test19: hidden
-test20: Child exited with status = 1  (4 pts)
-test21: hidden  (3 pts)
+test16: 
+test17: 
+test18: 
+test19: 
+test20: 
+test21: 
 
 others:
 Note that the & symbol can only be included at the end of the command line; otherwise, this is auser error.(v1.3)
