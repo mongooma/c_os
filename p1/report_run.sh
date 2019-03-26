@@ -1,8 +1,14 @@
-# https://submitty.cs.rpi.edu/index.php?semester=s19&course=csci4210&component=misc&page=display_file&dir=course_materials&file=p1.pdf&path=%2Fvar%2Flocal%2Fsubmitty%2Fcourses%2Fs19%2Fcsci4210%2Fuploads%2Fcourse_materials%2Fprojects%2Fp1%2Fp1.pdf
+#!/bin/bash
 
-# 1.Of the four simulated algorithms, which algorithm is the “best” algorithm? 
-# Which algorithm is best-suited for CPU-bound processes?  (long CPU bursts & short IO bursts)
-# Which algorithm is best-suited for I/O-bound processes?  (short CPU bursts & long IO bursts)
-# Support your answer by citing speciﬁc simulation results.
+alphal=(0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9)
+tslicel=(10 20 30)
+rraddl=("BEGINNING", "END")
 
-# 
+for alpha in ${alphal[*]}; do
+  for tslice in ${tslicel[*]}; do
+    for rradd in ${rraddl[*]}; do
+        python project_report.py 2 0.01 200 20 20 $alpha $tslice $rradd
+    done
+  done
+done
+

@@ -926,8 +926,8 @@ if __name__ == "__main__":
 	if debugging:
 		#sys.argv = ["project_1.py", 2, 0.01, 200, 1, 4, 0.5, 120]
 		#sys.argv = ["project_1.py", 2, 0.01, 200, 2, 4, 0.5, 120]
-		#sys.argv = ["project_1.py", 2, 0.01, 200, 12, 4, 0.5, 120]
-		sys.argv = ["project_1.py", 73, 0.001, 3000, 12, 4, 0.5, 950]  #1min10sec
+		sys.argv = ["project_1.py", 2, 0.01, 200, 12, 4, 0.5, 120, "END"]
+		#sys.argv = ["project_1.py", 73, 0.001, 3000, 12, 4, 0.5, 950]  #40sec
 		algo_list = ["SJF", "SRT", "FCFS", "RR"]
 	else:
 		algo_list = ["SJF", "SRT", "FCFS", "RR"]
