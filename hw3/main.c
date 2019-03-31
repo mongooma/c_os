@@ -4,25 +4,6 @@
 
 #include "functions.h"
 
-
-/* global variables */
-int max_square;
-int deadends;
-pthread_t * global_tid_l;
-int global_tid_l_len;
-int thread_no;
-char *** dead_end_boards;
-
-typedef struct move_next_args
-{
-	char ** board; 
-	const int * board_size; 
-	int * current_pos; 
-	int move;
-	const int direction;
-};
-
-
 int main(int argc, char ** argv){
 
 	/* get m * n from cmd arguments
@@ -44,40 +25,45 @@ int main(int argc, char ** argv){
 	 */
 	setvbuf( stdout, NULL, _IONBF, 0 );
 
-	int m = argv[1];
-	int n = argv[2];
+	int m = atoi(argv[1]);
+	int n = atoi(argv[2]);
+	int x = 0;
 
-	printf("THREAD %d: Solving Sonny's knight's tour problem for a %dx%d board\n", pthread_self(), m, n);
+	printf("THREAD %ld: Solving Sonny's knight's tour problem for a %dx%d board\n", pthread_self(), m, n);
 
+	/* sumitty: only print dead end msg having found larger than x coverage*/
+	
 	if(argc > 3){
-		int x = argv[3];
+		x = atoi(argv[3]);
 	}
 
 	char ** board; /* initial board configuration */
 
-	int * start = [0, 0];
-
 	/* init global variables */
 	max_square = 0;
 	deadends = 0;
+	global_tid_l_len = 1;
 	/* when a dead end is encountered in a thread, that thread checks the
 	variable, updating it if a new maximum is found.*/
 	/**********/
 
 	/* init the main thread */
-	board = calloc(m, sizeof(char *))
+	board = calloc(m, sizeof(char *));
 	for(int i = 0; i < m; i++){
 		board[i] = calloc(n, sizeof(char));
 	}
 
-	
-	struct move_next_args args;
+	move_next_arg args;
 
 	args.board = board;
-	args.board_size = [m, n];
-	args.current_pos = [0, 0];
+	args.board_size[0] = m;
+	args.board_size[1] = n;
+	args.current_pos = calloc(2, sizeof(int));
+	args.current_pos[0] = 0;
+	args.current_pos[1] = 0;
 	args.move = 0;
 	args.direction = 2;
+	args.x = x;
 
 	move_next((void *) &args);  /* the first position has only one possible move - 2*/
 
@@ -88,21 +74,21 @@ int main(int argc, char ** argv){
 
 	/**/
 
-	printf("THREAD %d: Best solution(s) found visit %d squares (out of %d)", pthread_self(), max_square, m * n);
+	printf("THREAD %ld: Best solution(s) found visit %d squares (out of %d)", pthread_self(), max_square, m * n);
 
 	/* print dead end boards; by row */
 	for(int k = 0; k < deadends; k ++){
 		for(int i = 0; i < m; i ++){
 			if(i == 0){
-				printf("THREAD %d: > ", pthread_self());
+				printf("THREAD %ld: > ", pthread_self());
 			}else{
-				printf("THREAD %d:   ", pthread_self());	
+				printf("THREAD %ld:   ", pthread_self());	
 			}
 			for(int j = 0; j < n; j ++){
 				if(dead_end_boards[k][i][j] == 'S'){
-					printf('S');
+					printf("%c", 'S');
 				}else{
-					printf('.');
+					printf("%c", '.');
 				}
 			}
 			printf("\n");

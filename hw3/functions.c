@@ -4,14 +4,6 @@
 
 #include "functions.h"
 
-/* You can't execute code outside of functions.*/
-int max_square;
-int deadends;
-pthread_t * global_tid_l;
-int global_tid_l_len;
-int thread_no;
-char *** dead_end_boards;
-
 /* mutex */
 pthread_mutex_t mutex_1 = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_2 = PTHREAD_MUTEX_INITIALIZER;
@@ -34,30 +26,10 @@ pthread_mutex_t mutex_3 = PTHREAD_MUTEX_INITIALIZER;
 
 */
 
-typedef struct moves_type
-{
-	int move_no;
-	int * directions;
 
-};
-
-typedef struct move_next_args
-{
-	char ** board; 
-	const int * board_size; 
-	int * current_pos; 
-	int move;
-	const int direction;
-};
-
-
-int move_next(void * arguments){
+void * move_next(void * args){
 
 	/*
-	param board: a current board configuration at this leaf
-	param current_pos: (i, j) -> row, col, start from up-left corner
-	param board_size: (m, n) -> row, col
-
 					 +1
 
          +0
@@ -75,60 +47,67 @@ int move_next(void * arguments){
 
 	*/
 
-	struct move_next_args ** new_args_l = calloc(4, sizeof(move_next_args *));
+	move_next_arg * arguments = args;
+	/* arguments is a pointer; use -> for the members */
+
+	move_next_arg ** new_args_l = calloc(4, sizeof(move_next_arg *));
 
 	/* 1. make move */
 
-	move_to_direction(arguments.board, arguments.board_size, arguments.current_pos, arguments.direction);
-	arguments.move += 1;
+	move_to_direction(arguments->board, arguments->current_pos, (const int) (arguments->direction));
+	arguments->move += 1;
 	/* board configuration and current_pos are changed*/
 
-	/* 2. check next available move no */
-
-	moves_type available = check_move(arguments.board, arguments.board_size, arguments.current_pos);
+    /* 2. check next available move no */     
+    moves_type available;
+	available.directions = calloc(4, sizeof(int));
+	available.move_no = 0;
+	check_move(available, (const char **) (arguments->board), (const char *) (arguments->board_size), (const int *) (arguments->current_pos));     
 	assert(available.move_no <= 4);
 
-	char *** new_board_l;
+	char *** new_board_l = calloc(4, sizeof( char ** ));
 
 	/* if valid next move, create threads */
 	if(available.move_no > 1){
-		printf("THREAD %d: %d moves possible after move #%d; creating threads...\n", 
-									pthread_self(), arguments.move);
+		printf("THREAD %ld: %d moves possible after move #%d; creating threads...\n", 
+									pthread_self(), available.move_no, arguments->move);
 		int max_covered = 0;
 
 		for(int i = 0; i < 4; i ++){
-			
+		
 			if(available.directions[i] == 1){
 
-				new_board_l[i] = calloc(board_size[0], sizeof(char *));
-				for(int j = 0; j < board_size[1]; j ++){
-					new_board_l[i][j] = calloc(board_size[1], sizeof(char));
+				new_board_l[i] = calloc(arguments->board_size[0], sizeof(char *));
+				for(int j = 0; j < arguments->board_size[1]; j ++){
+					new_board_l[i][j] = calloc(arguments->board_size[1], sizeof(char));
 				} 
 
 				new_args_l[i] = arguments;
-				new_args_l[i].direction = i;
-				pthread_t * tid;
+				new_args_l[i]->direction = i;
+				pthread_t tid = -1;
 
 				/* add the tid to the global tid list*/				
 				pthread_mutex_lock( &mutex_2 );
 				if(thread_no >= global_tid_l_len){
-					global_tid_l = realloc(2 * global_tid_l_len, sizeof(pthread_t));
+					global_tid_l = realloc(global_tid_l, 2 * global_tid_l_len);
 				}
 				pthread_mutex_unlock( &mutex_2 );
 				
-				pthread_create(tid, NULL, move_next, (void *)&new_args_l[i]);
+				pthread_create(&tid, NULL, move_next, (void *)&new_args_l[i]);
 				
 				pthread_mutex_lock( &mutex_3 );
 				global_tid_l[thread_no-1] = tid;
 				pthread_mutex_lock( &mutex_3 );
 				
 				#ifdef NO_PARALLE
-				int covered;
-				pthread_join(*tid, &covered);
+				int covered; 
+				pthread_join(tid, &covered); //
 				if(covered > max_covered){
 					max_covered = covered;
 				}
-				printf("THREAD %d: Thread [%d] joined (returned %d)", pthread_self(), *tid, covered);
+				if(covered > arguments->x){
+					printf("THREAD %ld: Thread [%d] joined (returned %d)", pthread_self(), *tid, covered);
+				}
 				#endif
 
 			}
@@ -138,12 +117,12 @@ int move_next(void * arguments){
 		/********************/
 		free(new_board_l); /* will it affect the new boards in the list?*/
 		/*free the old board */
-		for(int i = 0; i < board_size[1]; i ++){
-			free(board[i]);
+		for(int i = 0; i < arguments->board_size[1]; i ++){
+			free(arguments->board[i]);
 		} 
-		free(board);
+		free(arguments->board);
 
-		return max_covered; /* if use NO_PARALLEL this will be meaningful? */
+		pthread_exit(&max_covered); /* if use NO_PARALLEL this will be meaningful? */
 		/*********************/
 
 	}else if(available.move_no == 1){
@@ -151,47 +130,48 @@ int move_next(void * arguments){
 
 		for(int i = 0; i < 4; i ++){	
 			if(available.directions[i] == 1){
-				arguments.direction = i;
+				arguments->direction = i;
 				move_next(arguments);
 				break;
 			}
 		}
 
-		return 0
+		int mid_state = -1;
+		pthread_exit(&mid_state);
 
 	}else{ /* dead end*/
-		printf("THREAD %d: Dead end after move #%d\n", pthread_self(), arguments.move);
+		printf("THREAD %ld: Dead end after move #%d\n", pthread_self(), arguments->move);
 		/* todo: dead end boards....*/
 		pthread_mutex_lock( &mutex_1 );
 		/* add to dead_end_squares */
 		deadends += 1;
-		dead_end_boards = realloc(deadends, sizeof(char **));
-		dead_end_boards[deadends - 1] = calloc(board_size[0], sizeof(char *))
-		for(int i = 0; i < board_size[0]; i++){
-			dead_end_boards[deadends - 1][i] = calloc(board_size[1], sizeof(char));
+		dead_end_boards = realloc(dead_end_boards, deadends);
+		dead_end_boards[deadends - 1] = calloc(arguments->board_size[0], sizeof(char *));
+		for(int i = 0; i < arguments->board_size[0]; i++){
+			dead_end_boards[deadends - 1][i] = calloc(arguments->board_size[1], sizeof(char));
 		}
-		for(int i = 0; i < board_size[0]; i ++){
-			for(int j = 0; j < board_size[1]; j ++){
-				dead_end_boards[deadends - 1][i][j] = board[i][j];
+		for(int i = 0; i < arguments->board_size[0]; i ++){
+			for(int j = 0; j < arguments->board_size[1]; j ++){
+				dead_end_boards[deadends - 1][i][j] = arguments->board[i][j];
 			}
 		}
 
 		/* update max_square */
 
-		if(max_square < covered){
-			max_square == covered;
+		if(max_square < arguments->move){
+			max_square = arguments->move;
 		}
 		
 		pthread_mutex_unlock( &mutex_1 );	
 
 		/*free the old board */
-		for(int i = 0; i < board_size[1]; i ++){
-			free(board[i]);
+		for(int i = 0; i < arguments->board_size[1]; i ++){
+			free(arguments->board[i]);
 		} 
-		free(board);
+		free(arguments->board);
 
 		/* report dead end and return the no. of squares covered*/
-		return covered;
+		pthread_exit(&arguments->move);
 		/*********************/
 	
 	}
@@ -200,7 +180,7 @@ int move_next(void * arguments){
 
 
 
-moves check_move(const char ** board, const int * board_size, const int * current_pos){
+void check_move(moves_type available, const char ** board, const int * board_size, const int * current_pos){
 	/*
 	
 	return moves_type:
@@ -221,12 +201,9 @@ moves check_move(const char ** board, const int * board_size, const int * curren
 
 	*/
 
-	moves_type available;
-	available.directions = calloc(4, sizeof(int));
-	available.move_no = 0;
 
 	/* check 0 */
-	if((current_pos[0] > 0) & (current_pos[1]) > 1){
+	if((current_pos[0] > 0) & (current_pos[1] > 1)){
 		if(board[current_pos[0] - 1][current_pos[1] - 2] != 'S'){
 			available.directions[0] = 1;
 			available.move_no += 1;
@@ -234,7 +211,7 @@ moves check_move(const char ** board, const int * board_size, const int * curren
 	}
 
 	/* check 1 */
-	if((current_pos[0] > 2) & (current_pos[1]) < board_size[1]){
+	if((current_pos[0] > 2) & (current_pos[1] < board_size[1])){
 		if(board[current_pos[0] - 2][current_pos[1] + 1] != 'S'){
 			available.directions[1] = 1;
 			available.move_no += 1;
@@ -242,7 +219,7 @@ moves check_move(const char ** board, const int * board_size, const int * curren
 	}
 
 	/* check 2 */
-	if((current_pos[0] < board_size[0]) & (current_pos[1]) < (board_size[1] - 1)){
+	if((current_pos[0] < board_size[0]) & (current_pos[1] < (board_size[1] - 1))){
 		if(board[current_pos[0] + 1][current_pos[1] + 2] != 'S'){
 			available.directions[2] = 1;
 			available.move_no += 1;
@@ -250,14 +227,12 @@ moves check_move(const char ** board, const int * board_size, const int * curren
 	}
 
 	/* check 3 */
-	if((current_pos[0] < (board_size[0] - 1)) & (current_pos[1]) > 0){
+	if((current_pos[0] < (board_size[0] - 1)) & (current_pos[1] > 0)){
 		if(board[current_pos[0] + 2][current_pos[1] - 1] != 'S'){
 			available.directions[3] = 1;
 			available.move_no += 1;
 		}
 	}
-
-	return available;
 
 
 }
@@ -265,7 +240,7 @@ moves check_move(const char ** board, const int * board_size, const int * curren
 
 
 
-int move_to_direction(char ** board, const int * board_size, int * current_pos, const int direction){
+int move_to_direction(char ** board, int * current_pos, const int direction){
 	/*
 
 	 modify the board configuration;
@@ -313,6 +288,8 @@ int move_to_direction(char ** board, const int * board_size, int * current_pos, 
 
 
 	board[current_pos[0]][current_pos[1]] = 'S';
+
+	return 0;
 
 
 }
