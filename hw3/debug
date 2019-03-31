@@ -1,10 +1,2 @@
-functions.c: In function ‘move_next’:
-functions.c:65:60: warning: passing argument 3 of ‘check_move’ from incompatible pointer type [-Wincompatible-pointer-types]
-  check_move(available, (const char **) (arguments->board), (const char *) (arguments->board_size), (const int *) (arguments->current_pos));     
-                                                            ^
-In file included from functions.c:5:0:
-functions.h:32:6: note: expected ‘const int *’ but argument is of type ‘const char *’
- void check_move(moves_type available, const char ** board, const int * board_size, const int * current_pos);
-      ^~~~~~~~~~
 1: file not recognized: File truncated
 collect2: error: ld returned 1 exit status

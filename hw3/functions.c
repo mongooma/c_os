@@ -62,7 +62,7 @@ void * move_next(void * args){
     moves_type available;
 	available.directions = calloc(4, sizeof(int));
 	available.move_no = 0;
-	check_move(available, (const char **) (arguments->board), (const char *) (arguments->board_size), (const int *) (arguments->current_pos));     
+	check_move(available, (const char **) (arguments->board), (const int *) (arguments->board_size), (const int *) arguments->current_pos);     
 	assert(available.move_no <= 4);
 
 	char *** new_board_l = calloc(4, sizeof( char ** ));
@@ -99,7 +99,7 @@ void * move_next(void * args){
 				global_tid_l[thread_no-1] = tid;
 				pthread_mutex_lock( &mutex_3 );
 				
-				#ifdef NO_PARALLE
+				#ifdef NO_PARALLEL
 				int covered; 
 				pthread_join(tid, &covered); //
 				if(covered > max_covered){
