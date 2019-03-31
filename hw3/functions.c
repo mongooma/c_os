@@ -46,6 +46,7 @@ typedef struct move_next_args
 	char ** board; 
 	const int * board_size; 
 	int * current_pos; 
+	int move;
 	const int direction;
 };
 
@@ -74,13 +75,12 @@ int move_next(void * arguments){
 
 	*/
 
-	struct move_next_args * args = arguments;
-
 	struct move_next_args ** new_args_l = calloc(4, sizeof(move_next_args *));
 
 	/* 1. make move */
 
 	move_to_direction(arguments.board, arguments.board_size, arguments.current_pos, arguments.direction);
+	arguments.move += 1;
 	/* board configuration and current_pos are changed*/
 
 	/* 2. check next available move no */
@@ -92,6 +92,8 @@ int move_next(void * arguments){
 
 	/* if valid next move, create threads */
 	if(available.move_no > 1){
+		printf("THREAD %d: %d moves possible after move #%d; creating threads...\n", 
+									pthread_self(), arguments.move);
 		int max_covered = 0;
 
 		for(int i = 0; i < 4; i ++){
@@ -126,6 +128,7 @@ int move_next(void * arguments){
 				if(covered > max_covered){
 					max_covered = covered;
 				}
+				printf("THREAD %d: Thread [%d] joined (returned %d)", pthread_self(), *tid, covered);
 				#endif
 
 			}
@@ -157,6 +160,7 @@ int move_next(void * arguments){
 		return 0
 
 	}else{ /* dead end*/
+		printf("THREAD %d: Dead end after move #%d\n", pthread_self(), arguments.move);
 		/* todo: dead end boards....*/
 		pthread_mutex_lock( &mutex_1 );
 		/* add to dead_end_squares */

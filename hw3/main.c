@@ -13,6 +13,15 @@ int global_tid_l_len;
 int thread_no;
 char *** dead_end_boards;
 
+typedef struct move_next_args
+{
+	char ** board; 
+	const int * board_size; 
+	int * current_pos; 
+	int move;
+	const int direction;
+};
+
 
 int main(int argc, char ** argv){
 
@@ -33,9 +42,12 @@ int main(int argc, char ** argv){
             +3	
 
 	 */
+	setvbuf( stdout, NULL, _IONBF, 0 );
 
 	int m = argv[1];
 	int n = argv[2];
+
+	printf("THREAD %d: Solving Sonny's knight's tour problem for a %dx%d board\n", pthread_self(), m, n);
 
 	if(argc > 3){
 		int x = argv[3];
@@ -58,7 +70,16 @@ int main(int argc, char ** argv){
 		board[i] = calloc(n, sizeof(char));
 	}
 
-	move_next(board, [m, n], [0, 0], 2);  /* the first position has only one possible move - 2*/
+	
+	struct move_next_args args;
+
+	args.board = board;
+	args.board_size = [m, n];
+	args.current_pos = [0, 0];
+	args.move = 0;
+	args.direction = 2;
+
+	move_next((void *) &args);  /* the first position has only one possible move - 2*/
 
 	/* join the child threads; order doesn't really matter */
 	for(int i = 0; i < thread_no; i ++ ){
@@ -66,6 +87,27 @@ int main(int argc, char ** argv){
 	}
 
 	/**/
+
+	printf("THREAD %d: Best solution(s) found visit %d squares (out of %d)", pthread_self(), max_square, m * n);
+
+	/* print dead end boards; by row */
+	for(int k = 0; k < deadends; k ++){
+		for(int i = 0; i < m; i ++){
+			if(i == 0){
+				printf("THREAD %d: > ", pthread_self());
+			}else{
+				printf("THREAD %d:   ", pthread_self());	
+			}
+			for(int j = 0; j < n; j ++){
+				if(dead_end_boards[k][i][j] == 'S'){
+					printf('S');
+				}else{
+					printf('.');
+				}
+			}
+			printf("\n");
+		}
+	}
 
 	return EXIT_SUCCESS;
 
