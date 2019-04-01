@@ -1,0 +1,12 @@
+Some issues:
+
+1. './a.out 3 4'
+
+realloc(): invalid next size 
+
+136
+
+ "This error occurs because some other part of your code has corrupted the heap "
+
+
+

@@ -18,15 +18,17 @@ typedef struct move_next_args
 	int move;
 	int direction;
 	int x;
+	pthread_t parent_tid;
 } move_next_arg;
 
 /* global variables */
 int max_square;
 int deadends;
 pthread_t * global_tid_l;
-int global_tid_l_len;
+long int global_tid_l_len;
 int thread_no;
 char *** dead_end_boards;
+int * dead_end_cov;
 
 void * move(void * arguments);
 void check_move(moves_type * available, const char ** board, const int * board_size, const int * current_pos);

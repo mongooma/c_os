@@ -1,45 +1,64 @@
-THREAD 140512084625216: Solving Sonny's knight's tour problem for a 3x3 board
-move: here0, thread 140512084625216, current_pos: (0, 0) 
-(0, 0)
-check_move: before: move_no = 0
-check_move: 5 found 
-check_move: 6 found 
-check_move: after: move_no = 2
-THREAD 140512084625216: 2 moves possible after move #1; creating threads...
-move: here10 
-move: here11, child thread 140512075777792 
-move: here0, thread 140512075777792, current_pos: (1, 2) 
-(0, 0)(1, 2)
-check_move: before: move_no = 0
-check_move: 0 found 
-check_move: after: move_no = 1
-move: here0, thread 140512075777792, current_pos: (2, 0) 
-(0, 0)(1, 2)(2, 0)
-check_move: before: move_no = 0
-check_move: 3 found 
-check_move: after: move_no = 1
-move: here0, thread 140512075777792, current_pos: (0, 1) 
-(0, 0)(0, 1)(1, 2)(2, 0)
-check_move: before: move_no = 0
-check_move: 6 found 
-check_move: after: move_no = 1
-move: here0, thread 140512075777792, current_pos: (2, 2) 
-(0, 0)(0, 1)(1, 2)(2, 0)(2, 2)
-check_move: before: move_no = 0
-check_move: 1 found 
-check_move: after: move_no = 1
-move: here0, thread 140512075777792, current_pos: (1, 0) 
-(0, 0)(0, 1)(1, 0)(1, 2)(2, 0)(2, 2)
-check_move: before: move_no = 0
-check_move: 4 found 
-check_move: after: move_no = 1
-move: here0, thread 140512075777792, current_pos: (0, 2) 
-(0, 0)(0, 1)(0, 2)(1, 0)(1, 2)(2, 0)(2, 2)
-check_move: before: move_no = 0
-check_move: 7 found 
-check_move: after: move_no = 1
-move: here0, thread 140512075777792, current_pos: (2, 1) 
-(0, 0)(0, 1)(0, 2)(1, 0)(1, 2)(2, 0)(2, 1)(2, 2)
-check_move: before: move_no = 0
-check_move: after: move_no = 0
-THREAD 140512075777792: Dead end after move #8
+THREAD 140684983994176: Solving Sonny's knight's tour problem for a 4x3 board
+THREAD 140684983994176: 2 moves possible after move #1; creating threads...
+THREAD 140684973377280: 2 moves possible after move #2; creating threads...
+THREAD 140684964923136: 2 moves possible after move #4; creating threads...
+THREAD 140684956468992: Dead end after move #6
+THREAD 140684964923136: Thread [140684956468992] joined (returned 6)
+THREAD 140684956468992: 2 moves possible after move #5; creating threads...
+THREAD 140684740724480: Dead end after move #10
+THREAD 140684956468992: Thread [140684740724480] joined (returned 10)
+THREAD 140684740724480: Dead end after move #10
+THREAD 140684956468992: Thread [140684740724480] joined (returned 10)
+THREAD 140684964923136: Thread [140684956468992] joined (returned 10)
+THREAD 140684973377280: Thread [140684964923136] joined (returned 10)
+THREAD 140684964923136: 2 moves possible after move #3; creating threads...
+THREAD 140684956468992: 2 moves possible after move #5; creating threads...
+THREAD 140684740724480: 2 moves possible after move #6; creating threads...
+THREAD 140684732270336: Dead end after move #8
+THREAD 140684740724480: Thread [140684732270336] joined (returned 8)
+THREAD 140684732270336: Dead end after move #7
+THREAD 140684740724480: Thread [140684732270336] joined (returned 7)
+THREAD 140684956468992: Thread [140684740724480] joined (returned 8)
+THREAD 140684740724480: Dead end after move #8
+THREAD 140684956468992: Thread [140684740724480] joined (returned 8)
+THREAD 140684964923136: Thread [140684956468992] joined (returned 8)
+THREAD 140684956468992: 2 moves possible after move #7; creating threads...
+THREAD 140684740724480: 2 moves possible after move #8; creating threads...
+THREAD 140684732270336: Dead end after move #10
+THREAD 140684740724480: Thread [140684732270336] joined (returned 10)
+THREAD 140684732270336: Dead end after move #9
+THREAD 140684740724480: Thread [140684732270336] joined (returned 9)
+THREAD 140684956468992: Thread [140684740724480] joined (returned 10)
+THREAD 140684740724480: Dead end after move #8
+THREAD 140684956468992: Thread [140684740724480] joined (returned 8)
+THREAD 140684964923136: Thread [140684956468992] joined (returned 10)
+THREAD 140684973377280: Thread [140684964923136] joined (returned 10)
+THREAD 140684983994176: Thread [140684973377280] joined (returned 10)
+THREAD 140684973377280: 2 moves possible after move #4; creating threads...
+THREAD 140684964923136: 2 moves possible after move #5; creating threads...
+THREAD 140684956468992: 2 moves possible after move #7; creating threads...
+THREAD 140684740724480: Dead end after move #9
+THREAD 140684956468992: Thread [140684740724480] joined (returned 9)
+THREAD 140684740724480: Dead end after move #10
+THREAD 140684956468992: Thread [140684740724480] joined (returned 10)
+THREAD 140684964923136: Thread [140684956468992] joined (returned 10)
+THREAD 140684956468992: 2 moves possible after move #9; creating threads...
+THREAD 140684740724480: Dead end after move #10
+THREAD 140684956468992: Thread [140684740724480] joined (returned 10)
+THREAD 140684740724480: Dead end after move #11
+THREAD 140684956468992: Thread [140684740724480] joined (returned 11)
+THREAD 140684964923136: Thread [140684956468992] joined (returned 11)
+THREAD 140684973377280: Thread [140684964923136] joined (returned 11)
+THREAD 140684964923136: 2 moves possible after move #7; creating threads...
+THREAD 140684956468992: Sonny found a full knight's tour!
+THREAD 140684964923136: Thread [140684956468992] joined (returned 12)
+THREAD 140684956468992: Sonny found a full knight's tour!
+THREAD 140684964923136: Thread [140684956468992] joined (returned 12)
+THREAD 140684973377280: Thread [140684964923136] joined (returned 12)
+THREAD 140684983994176: Thread [140684973377280] joined (returned 12)
+THREAD 140684983994176: Best solution(s) found visit 12 squares (out of 12)
+THREAD 140684983994176: Dead end boards:
+THREAD 140684983994176: > S.S
+THREAD 140684983994176:   SSS
+THREAD 140684983994176:   SSS
+THREAD 140684983994176:   SSS
