@@ -28,6 +28,6 @@ int global_tid_l_len;
 int thread_no;
 char *** dead_end_boards;
 
-void * move_next(void * arguments);
-void check_move(moves_type available, const char ** board, const int * board_size, const int * current_pos);
+void * move(void * arguments);
+void check_move(moves_type * available, const char ** board, const int * board_size, const int * current_pos);
 int move_to_direction(char ** board, int * current_pos, const int direction);

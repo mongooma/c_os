@@ -42,7 +42,9 @@ int main(int argc, char ** argv){
 	/* init global variables */
 	max_square = 0;
 	deadends = 0;
+	global_tid_l = calloc(1, sizeof(pthread_t));
 	global_tid_l_len = 1;
+	thread_no = 0;
 	/* when a dead end is encountered in a thread, that thread checks the
 	variable, updating it if a new maximum is found.*/
 	/**********/
@@ -53,19 +55,28 @@ int main(int argc, char ** argv){
 		board[i] = calloc(n, sizeof(char));
 	}
 
+	#ifdef DEBUG_pass
+		printf("main: here1 \n");
+	#endif
+
 	move_next_arg args;
 
 	args.board = board;
+	args.board[0][0] = 'S';
 	args.board_size[0] = m;
 	args.board_size[1] = n;
 	args.current_pos = calloc(2, sizeof(int));
 	args.current_pos[0] = 0;
 	args.current_pos[1] = 0;
-	args.move = 0;
-	args.direction = 2;
+	args.move = 1;
+	args.direction = 6;
 	args.x = x;
 
-	move_next((void *) &args);  /* the first position has only one possible move - 2*/
+	#ifdef DEBUG_pass
+		printf("main: here2 \n");
+	#endif
+
+	move((void *) &args);  /* the first position has only one possible move - 2*/
 
 	/* join the child threads; order doesn't really matter */
 	for(int i = 0; i < thread_no; i ++ ){

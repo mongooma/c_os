@@ -1,2 +1,45 @@
-1: file not recognized: File truncated
-collect2: error: ld returned 1 exit status
+THREAD 140512084625216: Solving Sonny's knight's tour problem for a 3x3 board
+move: here0, thread 140512084625216, current_pos: (0, 0) 
+(0, 0)
+check_move: before: move_no = 0
+check_move: 5 found 
+check_move: 6 found 
+check_move: after: move_no = 2
+THREAD 140512084625216: 2 moves possible after move #1; creating threads...
+move: here10 
+move: here11, child thread 140512075777792 
+move: here0, thread 140512075777792, current_pos: (1, 2) 
+(0, 0)(1, 2)
+check_move: before: move_no = 0
+check_move: 0 found 
+check_move: after: move_no = 1
+move: here0, thread 140512075777792, current_pos: (2, 0) 
+(0, 0)(1, 2)(2, 0)
+check_move: before: move_no = 0
+check_move: 3 found 
+check_move: after: move_no = 1
+move: here0, thread 140512075777792, current_pos: (0, 1) 
+(0, 0)(0, 1)(1, 2)(2, 0)
+check_move: before: move_no = 0
+check_move: 6 found 
+check_move: after: move_no = 1
+move: here0, thread 140512075777792, current_pos: (2, 2) 
+(0, 0)(0, 1)(1, 2)(2, 0)(2, 2)
+check_move: before: move_no = 0
+check_move: 1 found 
+check_move: after: move_no = 1
+move: here0, thread 140512075777792, current_pos: (1, 0) 
+(0, 0)(0, 1)(1, 0)(1, 2)(2, 0)(2, 2)
+check_move: before: move_no = 0
+check_move: 4 found 
+check_move: after: move_no = 1
+move: here0, thread 140512075777792, current_pos: (0, 2) 
+(0, 0)(0, 1)(0, 2)(1, 0)(1, 2)(2, 0)(2, 2)
+check_move: before: move_no = 0
+check_move: 7 found 
+check_move: after: move_no = 1
+move: here0, thread 140512075777792, current_pos: (2, 1) 
+(0, 0)(0, 1)(0, 2)(1, 0)(1, 2)(2, 0)(2, 1)(2, 2)
+check_move: before: move_no = 0
+check_move: after: move_no = 0
+THREAD 140512075777792: Dead end after move #8
