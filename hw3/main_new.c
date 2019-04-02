@@ -5,7 +5,7 @@
 #include <unistd.h>
 #include "functions_new.h"
 
-int MAX_DEAD_ENDS=1000; // work_around
+int MAX_DEAD_ENDS=1000; // work_around; 10000 will cause stack overflow 
 //int MAX_TIDS_NO=1000;
 
 int main(int argc, char ** argv){
@@ -150,7 +150,7 @@ int main(int argc, char ** argv){
 
 	/**/
 
-	sleep(20);	
+	//sleep(20);	
 	printf("THREAD %ld: Best solution(s) found visit %d squares (out of %d)\n", pthread_self(), max_square, m * n);
 
 	/* print dead end boards; by row */
