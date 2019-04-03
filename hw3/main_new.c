@@ -6,7 +6,7 @@
 #include "functions_new.h"
 
 int MAX_DEAD_ENDS=1000; // work_around; 10000 will cause stack overflow 
-//int MAX_TIDS_NO=1000;
+int MAX_TIDS_NO=1000;
 
 int main(int argc, char ** argv){
 
@@ -80,8 +80,9 @@ int main(int argc, char ** argv){
 	/* init global variables */
 	max_square = 0;
 	deadends = 0;
-	//global_tid_l = calloc(MAX_TIDS_NO, sizeof(pthread_t)); // realloc failed; workaround
-	//global_tid_l_len = MAX_TIDS_NO;
+	// global_tid_l = calloc(MAX_TIDS_NO, sizeof(pthread_t)); // realloc failed; workaround
+	global_tid_l = calloc(1, sizeof(pthread_t)); // realloc failed; workaround
+	global_tid_l_len = MAX_TIDS_NO;
 	thread_no = 0;
 
 	dead_end_boards = calloc(MAX_DEAD_ENDS, sizeof(char **)); // realloc failed; workaround
@@ -130,13 +131,15 @@ int main(int argc, char ** argv){
 
 
 	/* join the child threads; order doesn't really matter */
-	// int * max_covered;
-	// max_covered = calloc(1, sizeof(int));
-	// for(int i = 0; i < thread_no; i ++ ){
+	#ifndef NO_PARALLEL
+	unsigned int max_covered;
+	for(int i = 0; i < thread_no; i ++ ){
 	// 	unsigned int * covered;
 
 	// 	// debug: 3 * 4 can't reach i > 15; global_tid_l[i] is okay though
-	// 	pthread_join(global_tid_l[i], (void **)&covered); // block
+		pthread_join(global_tid_l[i], (void **)&max_covered); // block
+		//pthread_join(global_tid_l[i], NULL); // block
+		fprintf(stderr, "%ld\n", global_tid_l[i]);
 	// 	if(*covered <= (m * n)){
 	// 		if(*covered > *max_covered){
 	// 			*max_covered = *covered;
@@ -146,7 +149,9 @@ int main(int argc, char ** argv){
 	// 												global_tid_l[i], *covered);
 	// 		}
 	// 	}
-	// }
+	}
+	#endif
+
 
 	/**/
 

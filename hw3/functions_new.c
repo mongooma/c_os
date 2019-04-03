@@ -130,20 +130,7 @@ void * move(void * args){
 				#endif
 				/* board configuration and current_pos are changed*/
 
-				pthread_t tid = -1;
-
-				/* add the tid to the global tid list*/				
-				pthread_mutex_lock( &mutex_2 );
-				thread_no += 1;
-				// if(thread_no >= global_tid_l_len){
-				// 	global_tid_l_len = (int) (2 * global_tid_l_len);
-				// 	#ifdef DEBUG
-				// 	printf("move: global tid len: %ld \n", global_tid_l_len);
-				// 	#endif
-				// 	global_tid_l = realloc(global_tid_l, global_tid_l_len);
-
-				// }
-				pthread_mutex_unlock( &mutex_2 );
+				pthread_t tid = -1;			
 				
 				pthread_create(&tid, NULL, move, (void *)&new_args_l[i]); // 
 				#ifdef DEBUG_pass
@@ -151,14 +138,22 @@ void * move(void * args){
 				#endif
 				
 				// pthread_mutex_lock( &mutex_3 );
-				// global_tid_l[thread_no-1] = tid;
+				// /* add the tid to the global tid list*/	
+				// thread_no += 1;
+				// // if(thread_no >= global_tid_l_len){
+				// // 	global_tid_l_len = (int) (2 * global_tid_l_len);
+				// // 	#ifdef DEBUG
+				// // 	printf("move: global tid len: %ld \n", global_tid_l_len);
+				// // 	#endif
+				// // 	global_tid_l = realloc(global_tid_l, global_tid_l_len);
+
+				// // }
+				// global_tid_l[thread_no-1] = tid; // some memory issue here 
 				// pthread_mutex_unlock( &mutex_3 );
 				
 				#ifdef NO_PARALLEL
 				unsigned int * covered; //
 				pthread_join(tid, (void **)&covered); //
-							
-
 				pthread_mutex_lock( &mutex_4 );
 				// return the max covered of the child threads					
 				if(*covered > *max_covered){
@@ -166,7 +161,9 @@ void * move(void * args){
 				}
 				printf("THREAD %ld: Thread [%ld] joined (returned %d)\n", pthread_self(), tid, *covered);
 				pthread_mutex_unlock( &mutex_4 );
+
 				#endif
+				
 
 			}else{
 				/* free this arg */

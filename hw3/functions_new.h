@@ -24,8 +24,8 @@ typedef struct move_next_args
 /* global variables */
 int max_square;
 int deadends;
-// pthread_t * global_tid_l;
-// long int global_tid_l_len;
+long int * global_tid_l;
+long int global_tid_l_len;
 int thread_no;
 char *** dead_end_boards;
 int * dead_end_cov;
