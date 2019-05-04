@@ -1,0 +1,4 @@
+main.c: In function ‘main’:
+main.c:251:7: warning: unused variable ‘ready’ [-Wunused-variable]
+   int ready = select( FD_SETSIZE, &readfds, NULL, NULL, &timeout ); /* readfds is modified*/
+       ^~~~~

@@ -1,0 +1,29 @@
+
+
+
+implementations:
+
+* 32 concurrent connected clients (32 active threads)
+
+* 64 active user (log-in, not leaving the server)
+
+* select() requests from queue
+
+* log-in/log-out module
+
+* server send message
+
+	* private message
+	* broadcast message
+
+* share files 
+
+
+----
+
+key parts:
+
+* global user-id list
+
+* server get a connection request and open a child thread for the request
+
